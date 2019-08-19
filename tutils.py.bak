@@ -343,7 +343,7 @@ def text2csv(fname):
 
     f = open(fname[:fname.rfind('.')] + '.csv', 'w')
     writer = csv.writer(f)
-    bead_numbers = sorted(list(bead_positions.keys()), key=lambda x: len(
+    bead_numbers = sorted(bead_positions.keys(), key=lambda x: len(
         bead_positions[x]), reverse=True)
     duplicated = []
     for b in bead_numbers:
@@ -369,7 +369,7 @@ def highlight_stopped_beads(frame, tracked_objs,total_frames, bead_radius, std_t
         if len(obj.previous_centers)<2:
             is_stopped=True
         elif len(obj.previous_centers) >= 0.5*total_frames:
-            cen_x, cen_y = list(zip(*obj.previous_centers[end-100:end]))
+            cen_x, cen_y = zip(*obj.previous_centers[end-100:end])
             cx, cy = np.std(cen_x) <= std_threshold, np.std(
                 cen_y) <= std_threshold
             # conditions for satisfying stopping criteria
@@ -383,13 +383,13 @@ def highlight_stopped_beads(frame, tracked_objs,total_frames, bead_radius, std_t
             stopped_idxs.append(idx)
             frame = cv2.circle(
                 frame, obj.previous_centers[-1], bead_radius, (0, 0, 255), -1)
-    print(('Number of stopped beads={}'.format(n_stopped)))
+    print('Number of stopped beads={}'.format(n_stopped))
     return frame, n_stopped, stopped_idxs
 
 
 def save_to_audio(tracked_objs, obj_nums,folder):
     for num in obj_nums:
-        bx, by = list(zip(*tracked_objs[num].previous_centers))
+        bx, by = zip(*tracked_objs[num].previous_centers)
         bx, by = np.array(bx), np.array(by)
         bx -= bx[0]
         by -= by[0]
@@ -402,7 +402,7 @@ def save_to_audio(tracked_objs, obj_nums,folder):
         audio_combined=compute_audio_data(bx,by)
         #print(audio_combined.shape)
         #print('Bead {}: correct_samples={},returned_samples={}'.format(num,AUDIO_RATE*bx.size/float(FPS),audio_combined.shape[0]))
-        print(('Bead {}: correct time={}s'.format(num,bx.size/float(FPS))))
+        print('Bead {}: correct time={}s'.format(num,bx.size/float(FPS)))
         wavfile.write(folder+'bead_{}.wav'.format(num),AUDIO_RATE,audio_combined)
 
 def compute_audio_data(bx,by):
@@ -539,7 +539,7 @@ def extract_template_frames(filename,name='temp1.jpg'):
         frame_name=filename[:filename.rfind('/')+1]+name
         cv2.imwrite(frame_name,frame)
     else:
-        print(('Could not read frame for file {}'.format(filename)))
+        print('Could not read frame for file {}'.format(filename))
     src.release()
 
 def extract_temp_from_folder(target_folder):
@@ -584,7 +584,7 @@ def find_boundaries(imgname,debug=False):
         plt.plot(theta_list,rho_list,'r')
         plt.show()
     tilt_angle=theta_list[np.argmin(rho_list)]
-    print(('Pattern is titled by {:.2f} degree'.format(tilt_angle*180/np.pi)))
+    print('Pattern is titled by {:.2f} degree'.format(tilt_angle*180/np.pi))
     cv2.imwrite(imgname[:imgname.rfind('/')+1]+'check1.jpg',gray)
     
     min_dist_py=np.nanmin(np.array(rho_list,dtype=np.int32))
@@ -634,8 +634,8 @@ def find_beads_in_sensing_area(fname,tracked_objs,total_frames, bead_radius,stri
     
     try:
         xlim,ylim,is_in_square=find_boundaries(outname,debug=debug)
-    except Exception as e:
-        print(('Error in finding beads. '+str(e)))
+    except Exception, e:
+        print('Error in finding beads. '+str(e))
         xlim,ylim,is_in_square=oldres #works only if the first one doesn't work
         print('Successfully recovered parameters from previous result')
     
@@ -697,8 +697,8 @@ def count_beads(img,tmp,threshold=0.8,bead_radius=3):
     frame_orig=frame[:]
     gray=cv2.imread(img,0)
     template=cv2.imread(tmp,0)
-    print((frame.shape))
-    print((template.shape))
+    print(frame.shape)
+    print(template.shape)
     res=cv2.matchTemplate(gray,template,cv2.TM_CCOEFF_NORMED)
     loc=[np.where(res>=threshold)[0],np.where(res>=threshold)[1],res[np.where(res>=threshold)]]
     loc=nms(loc)
@@ -740,7 +740,7 @@ def extract_frames(fname,frame_numbers):
         if ret:
             cv2.imwrite(folder+'/frame{}.jpg'.format(idx),frame)
         else:
-            print(('Could not read frame number {}'.format(f)))
+            print('Could not read frame number {}'.format(f))
 
     source.release()
 
@@ -945,8 +945,8 @@ def track_video(fname,template_file,threshold):
     text2csv(txtfile)
     try:
         last_frame_of_video=get_last_frame(fname)
-    except Exception as e:
-        print((str(e)))
+    except Exception, e:
+        print(str(e))
         last_frame_of_video=frame[:]
         
     highlighted,num_stopped,stopped_idxs=highlight_stopped_beads(last_frame_of_video,tracked_objs,total_frames,bead_radius,std_threshold=1.0)
