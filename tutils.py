@@ -17,6 +17,7 @@ FPS = 24
 F_0 = 0.5
 AUDIO_RATE = 44100  # int(stretch_factor*(FPS/2.0))
 
+
 class MovingObj:
 
     def __init__(self, center):
@@ -26,7 +27,7 @@ class MovingObj:
         self.num_frames_detected = 1
         self.num_not_found = 0
         self.is_being_tracked = False
-        self.tracked_frame_indices=[]
+        self.tracked_frame_indices = []
 
     def prepareKF(self):
         kalman = cv2.KalmanFilter(4, 2)
@@ -69,7 +70,8 @@ class MovingObj:
         self.num_not_found = 0
         if self.num_frames_detected >= 3:
             self.is_being_tracked = True
-        self.determine_oscillation(fps=FPS, f_0=F_0, min_frames=100) ##CHANGE 1000 TO 100
+        self.determine_oscillation(
+            fps=FPS, f_0=F_0, min_frames=100)  # CHANGE 1000 TO 100
 
     def drop(self):
         self.num_not_found += 1
@@ -184,7 +186,7 @@ def computepairwise(matrix1, matrix2):
     return np.sqrt(result)
 
 
-def matchcentertoobj(centers, tracked_objs,frame_idx):
+def matchcentertoobj(centers, tracked_objs, frame_idx):
     current_predictions = np.array(
         [list(obj.lastcenter()) for obj in tracked_objs])  # list(obj.lastcenter())
     # current_predictions=current_predictions[:,:,0] #obj.predictnow()
@@ -255,28 +257,31 @@ def draw_full_paths_of_these_beads(initial_frame, beads_ids, tracked_objs, color
 
     return written_frame
 
-def drawtrajectory(previous,tracked_objs,this_frame,bead_indices,color='green'):
-    #previous: a dark frmae like matrix with only the trajectories drawn
-    #this_frame: frame on which to draw trajectory
-    channels={'blue':0,'green':1,'red':2}
-    
+
+def drawtrajectory(previous, tracked_objs, this_frame, bead_indices, color='green'):
+    # previous: a dark frmae like matrix with only the trajectories drawn
+    # this_frame: frame on which to draw trajectory
+    channels = {'blue': 0, 'green': 1, 'red': 2}
+
     for _beadidx in bead_indices:
         if tracked_objs[_beadidx].is_being_tracked:
-            previous=cv2.line(previous,tracked_objs[_beadidx].track_points()[0],tracked_objs[_beadidx].track_points()[1],255,1)
-            
-    idx=channels[color]
+            previous = cv2.line(previous, tracked_objs[_beadidx].track_points()[
+                                0], tracked_objs[_beadidx].track_points()[1], 255, 1)
+
+    idx = channels[color]
     #this_frame[:,:,:] = this_frame[:,:,:]*((previous[:,:])[:,:,np.newaxis])
-    data32=this_frame[:,:,idx].astype(np.int32)
-    np.clip(data32+previous,0,255,out=data32)
-    this_frame[:,:,idx]=data32.astype(np.uint8)
-    return previous,this_frame
+    data32 = this_frame[:, :, idx].astype(np.int32)
+    np.clip(data32 + previous, 0, 255, out=data32)
+    this_frame[:, :, idx] = data32.astype(np.uint8)
+    return previous, this_frame
+
 
 def writedistances(frame, tracked_objs, etime):
     finddist = lambda tp1, tp2: np.sqrt(
         (tp1[0] - tp2[0])**2 + (tp1[1] - tp2[1])**2)
     copied = frame[:]
     for idx, obj in enumerate(tracked_objs):
-        if True: #obj.num_frames_detected > 5:
+        if True:  # obj.num_frames_detected > 5:
             center = lambda: tuple(
                 (np.array(obj.previous_centers[0]) + np.array(obj.previous_centers[-1])) // 2)
             #dist=[finddist(obj.previous_centers[idx-1],obj.previous_centers[idx]) for idx in range(1,obj.num_frames_detected)]
@@ -320,10 +325,12 @@ def get_mean_drift(objs, min_frames=100):
 def save_beads(filename, tracked_objs):
     with open(filename, 'w') as f:
         pos_dict = {idx: obj.previous_centers for idx,
-                      obj in enumerate(tracked_objs)}
-        time_dict={idx: obj.tracked_frame_indices for idx,obj in enumerate(tracked_objs)}
-        combined=[pos_dict,time_dict]
+                    obj in enumerate(tracked_objs)}
+        time_dict = {idx: obj.tracked_frame_indices for idx,
+                     obj in enumerate(tracked_objs)}
+        combined = [pos_dict, time_dict]
         f.write(str(combined))
+
 
 def load_beads(filename):
     loaded_beads = []
@@ -362,21 +369,21 @@ def text2csv(fname):
     f.close()
 
 
-def highlight_stopped_beads(frame, tracked_objs,total_frames, bead_radius, std_threshold=1.0, strict=True,end=-1):
+def highlight_stopped_beads(frame, tracked_objs, total_frames, bead_radius, std_threshold=1.0, strict=True, end=-1):
     n_stopped = 0
     stopped_idxs = []
     for idx, obj in enumerate(tracked_objs):
-        if len(obj.previous_centers)<2:
-            is_stopped=True
-        elif len(obj.previous_centers) >= 0.5*total_frames:
-            cen_x, cen_y = list(zip(*obj.previous_centers[end-100:end]))
+        if len(obj.previous_centers) < 2:
+            is_stopped = True
+        elif len(obj.previous_centers) >= 0.5 * total_frames:
+            cen_x, cen_y = list(zip(*obj.previous_centers[end - 100:end]))
             cx, cy = np.std(cen_x) <= std_threshold, np.std(
                 cen_y) <= std_threshold
             # conditions for satisfying stopping criteria
 
             is_stopped = (cx and cy) if strict else (cx or cy)
         else:
-            is_stopped=False
+            is_stopped = False
 
         if is_stopped:
             n_stopped += 1
@@ -387,585 +394,670 @@ def highlight_stopped_beads(frame, tracked_objs,total_frames, bead_radius, std_t
     return frame, n_stopped, stopped_idxs
 
 
-def save_to_audio(tracked_objs, obj_nums,folder):
+def save_to_audio(tracked_objs, obj_nums, folder):
     for num in obj_nums:
         bx, by = list(zip(*tracked_objs[num].previous_centers))
         bx, by = np.array(bx), np.array(by)
         bx -= bx[0]
         by -= by[0]
         #video_time_steps = np.arange(len(bx)) / float(FPS)
-        p=figure()
-        p.line(np.arange(len(bx))/float(FPS),bx,color='red',name='{}_x'.format(num))
-        p.line(np.arange(len(by))/float(FPS),by,color='blue',name='{}_y'.format(num))
-        export_png(p,folder+'{}_bead.png'.format(num))
+        p = figure()
+        p.line(np.arange(len(bx)) / float(FPS), bx,
+               color='red', name='{}_x'.format(num))
+        p.line(np.arange(len(by)) / float(FPS), by,
+               color='blue', name='{}_y'.format(num))
+        export_png(p, folder + '{}_bead.png'.format(num))
 
-        audio_combined=compute_audio_data(bx,by)
-        #print(audio_combined.shape)
+        audio_combined = compute_audio_data(bx, by)
+        # print(audio_combined.shape)
         #print('Bead {}: correct_samples={},returned_samples={}'.format(num,AUDIO_RATE*bx.size/float(FPS),audio_combined.shape[0]))
-        print(('Bead {}: correct time={}s'.format(num,bx.size/float(FPS))))
-        wavfile.write(folder+'bead_{}.wav'.format(num),AUDIO_RATE,audio_combined)
+        print(('Bead {}: correct time={}s'.format(num, bx.size / float(FPS))))
+        wavfile.write(folder + 'bead_{}.wav'.format(num),
+                      AUDIO_RATE, audio_combined)
 
-def compute_audio_data(bx,by):
+
+def compute_audio_data(bx, by):
     n_seconds = len(bx) / float(FPS)
     stretch_factor = 1500
-    video_time=np.arange(len(bx))/float(FPS)
-    x_i = interp1d(video_time, bx,kind='nearest')
-    y_i = interp1d(video_time, by,kind='nearest')
+    video_time = np.arange(len(bx)) / float(FPS)
+    x_i = interp1d(video_time, bx, kind='nearest')
+    y_i = interp1d(video_time, by, kind='nearest')
 
-    stretched_time=np.linspace(0,n_seconds,n_seconds*AUDIO_RATE)
-    stretched_time=stretched_time[stretched_time<=video_time.max()]
+    stretched_time = np.linspace(0, n_seconds, n_seconds * AUDIO_RATE)
+    stretched_time = stretched_time[stretched_time <= video_time.max()]
 
-    audio_x=x_i(stretched_time)
-    audio_y=y_i(stretched_time)
+    audio_x = x_i(stretched_time)
+    audio_y = y_i(stretched_time)
 
-    scale2audio=lambda x: 65535*(x-x.min())/float(x.max()-x.min())-32768
-    audio_combined=np.concatenate((scale2audio(audio_x)[:,None],scale2audio(audio_y)[:,None]),axis=1)
+    scale2audio = lambda x: 65535 * \
+        (x - x.min()) / float(x.max() - x.min()) - 32768
+    audio_combined = np.concatenate(
+        (scale2audio(audio_x)[:, None], scale2audio(audio_y)[:, None]), axis=1)
     return audio_combined
 
 
-def compute_audio_data2(bx,by):
-        n_seconds = len(bx) / float(FPS)
-        stretch_factor = 1500
-        x_fft = np.fft.fft(bx)
-        y_fft = np.fft.fft(by)
-        true_frequencies = np.fft.fftfreq(bx.size, 1.0 / float(FPS))
+def compute_audio_data2(bx, by):
+    n_seconds = len(bx) / float(FPS)
+    stretch_factor = 1500
+    x_fft = np.fft.fft(bx)
+    y_fft = np.fft.fft(by)
+    true_frequencies = np.fft.fftfreq(bx.size, 1.0 / float(FPS))
 
-        fx_r = interp1d(true_frequencies, x_fft.real,kind='nearest')
-        fx_i = interp1d(true_frequencies, x_fft.imag,kind='nearest')
-        fy_r = interp1d(true_frequencies, y_fft.real,kind='nearest')
-        fy_i = interp1d(true_frequencies, y_fft.imag,kind='nearest')
+    fx_r = interp1d(true_frequencies, x_fft.real, kind='nearest')
+    fx_i = interp1d(true_frequencies, x_fft.imag, kind='nearest')
+    fy_r = interp1d(true_frequencies, y_fft.real, kind='nearest')
+    fy_i = interp1d(true_frequencies, y_fft.imag, kind='nearest')
 
-        stretched_frequencies = np.linspace(0,true_frequencies.max(), (n_seconds*AUDIO_RATE//2))
-        stretched_frequencies = stretched_frequencies[
-            stretched_frequencies < true_frequencies.max()] #filter out the edges of bins
+    stretched_frequencies = np.linspace(
+        0, true_frequencies.max(), (n_seconds * AUDIO_RATE // 2))
+    stretched_frequencies = stretched_frequencies[
+        stretched_frequencies < true_frequencies.max()]  # filter out the edges of bins
 
-        single2doublesidedfft=lambda x: np.concatenate((x[1:][::-1],x))
-        interpx_r = fx_r(stretched_frequencies)
-        interpx_i = fx_i(stretched_frequencies)
-        interpy_r = fy_r(stretched_frequencies)
-        interpy_i = fy_i(stretched_frequencies)
+    single2doublesidedfft = lambda x: np.concatenate((x[1:][::-1], x))
+    interpx_r = fx_r(stretched_frequencies)
+    interpx_i = fx_i(stretched_frequencies)
+    interpy_r = fy_r(stretched_frequencies)
+    interpy_i = fy_i(stretched_frequencies)
 
-        stretched_x_fft = np.complex128(np.zeros_like(interpx_r))
-        stretched_y_fft = np.complex128(np.zeros_like(interpy_r))
+    stretched_x_fft = np.complex128(np.zeros_like(interpx_r))
+    stretched_y_fft = np.complex128(np.zeros_like(interpy_r))
 
-        stretched_x_fft.real = interpx_r
-        stretched_x_fft.imag = interpx_i
-        stretched_y_fft.real = interpy_r
-        stretched_y_fft.imag = interpy_i
+    stretched_x_fft.real = interpx_r
+    stretched_x_fft.imag = interpx_i
+    stretched_y_fft.real = interpy_r
+    stretched_y_fft.imag = interpy_i
 
-        #print(stretched_x_fft.shape,stretched_y_fft.shape)
+    # print(stretched_x_fft.shape,stretched_y_fft.shape)
 
-        #stretched_x_fft=single2doublesidedfft(stretched_x_fft)
-        #stretched_y_fft=single2doublesidedfft(stretched_y_fft)
+    # stretched_x_fft=single2doublesidedfft(stretched_x_fft)
+    # stretched_y_fft=single2doublesidedfft(stretched_y_fft)
 
-        stretched_x_time = np.abs(np.fft.ifft(stretched_x_fft))[:,None]
-        stretched_y_time = np.abs(np.fft.ifft(stretched_y_fft))[:,None]
+    stretched_x_time = np.abs(np.fft.ifft(stretched_x_fft))[:, None]
+    stretched_y_time = np.abs(np.fft.ifft(stretched_y_fft))[:, None]
 
-        audio_x = 65535 * (stretched_x_time - stretched_x_time.min()) / \
-            (stretched_x_time.max() - stretched_x_time.min()) - 32768
-        audio_y = 65535 * (stretched_y_time - stretched_y_time.min()) / \
-            (stretched_y_time.max() - stretched_y_time.min()) - 32768
+    audio_x = 65535 * (stretched_x_time - stretched_x_time.min()) / \
+        (stretched_x_time.max() - stretched_x_time.min()) - 32768
+    audio_y = 65535 * (stretched_y_time - stretched_y_time.min()) / \
+        (stretched_y_time.max() - stretched_y_time.min()) - 32768
 
-        audio_combined=np.concatenate((audio_x,audio_y),axis=1)
+    audio_combined = np.concatenate((audio_x, audio_y), axis=1)
 
-        return audio_combined
+    return audio_combined
+
 
 def get_last_frame(fname):
     video = cv2.VideoCapture(fname)
     #video.set(cv2.CAP_PROP_POS_AVI_RATIO, 0.99)
     number_of_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
-    #print(number_of_frames)
+    # print(number_of_frames)
     video.set(cv2.CAP_PROP_POS_FRAMES, number_of_frames - 2)
-    #pdb.set_trace()
+    # pdb.set_trace()
     ret, frame = video.read()
     last_frame = frame[:]
     video.release()
     return last_frame
 
-def trim_video(source,outfile,start,end):
-    source.set(cv2.CAP_PROP_POS_FRAMES,0) #start at the beginning
-    fps=source.get(cv2.CAP_PROP_FPS)
-    size=(int(source.get(cv2.CAP_PROP_FRAME_WIDTH)),int(source.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+
+def trim_video(source, outfile, start, end):
+    source.set(cv2.CAP_PROP_POS_FRAMES, 0)  # start at the beginning
+    fps = source.get(cv2.CAP_PROP_FPS)
+    size = (int(source.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(source.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     if os.path.exists(outfile):
         os.remove(outfile)
-    sink=cv2.VideoWriter(outfile,cv2.VideoWriter_fourcc('I','4','2','0'),fps,size)
-    source.set(cv2.CAP_PROP_POS_FRAMES,int(start*fps))
-    n_frames_needed=int((end-start)*fps)
-    ret,frame=source.read()
-    count=1
-    while count<n_frames_needed:
+    sink = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(
+        *'mp4v'), fps, size)
+    source.set(cv2.CAP_PROP_POS_FRAMES, int(start * fps))
+    n_frames_needed = int((end - start) * fps)
+    ret, frame = source.read()
+    count = 1
+    while count < n_frames_needed:
         sink.write(frame)
-        ret,frame=source.read()
+        ret, frame = source.read()
         if not ret:
             print('Reached end of file')
             break
-        count+=1
-    
+        count += 1
+
     sink.release()
 
-def extract_videos_for_processing(target_folder,extract_template=False):
-    all_outfiles=[]
-    target_files=[f for f in os.listdir(target_folder) if f.endswith('.mov')]
-    analysis_folder=target_folder+'tracking/'
+
+def extract_videos_for_processing(target_folder, extract_template=False, filemode=False, gui=None):
+    all_outfiles = []
+    if filemode:
+        target_files = [target_folder]
+        analysis_folder = target_folder[
+            :target_folder.rfind('/') + 1] + 'tracking/'
+
+    else:
+        target_files = [f for f in os.listdir(
+            target_folder) if f.endswith('.mov')]
+        analysis_folder = target_folder + 'tracking/'
+
     if not os.path.isdir(analysis_folder):
         os.mkdir(analysis_folder)
-        
-    for srcfile in target_files:
-        analysis_subfolder=analysis_folder+srcfile[:srcfile.rfind('.')]+'/'
-        infile=target_folder+srcfile
-        source=cv2.VideoCapture(infile)
-        n_clips=1+int(source.get(cv2.CAP_PROP_FRAME_COUNT)/(60*source.get(cv2.CAP_PROP_FPS)))
-        
+
+    for idx, srcfile in enumerate(target_files):
+        analysis_subfolder = analysis_folder + \
+            srcfile[:srcfile.rfind('.')] + '/'
+        infile = target_folder + srcfile
+        source = cv2.VideoCapture(infile)
+        n_clips = 1 + int(source.get(cv2.CAP_PROP_FRAME_COUNT) /
+                          (60 * source.get(cv2.CAP_PROP_FPS)))
+
         if not os.path.isdir(analysis_subfolder):
             os.mkdir(analysis_subfolder)
-            for min_idx in range(1,n_clips):
-                time_folder=analysis_subfolder+'{}m/'.format(min_idx)
+            for min_idx in range(1, n_clips):
+                if gui:
+                    gui[0].text = 'Processing Video {}/{}, Trimming clip {}/{}'.format(
+                        idx, len(target_files), min_idx, n_clips)
+                    gui[1].update_idletasks()
+                time_folder = analysis_subfolder + '{}m/'.format(min_idx)
                 os.mkdir(time_folder)
-                outfile=time_folder+srcfile[:srcfile.rfind('.')]+'_{}m.mov'.format(min_idx)
-                trim_video(source,outfile,min_idx*60-10,min_idx*60)
+                outfile = time_folder + \
+                    srcfile[:srcfile.rfind('.')] + '_{}m.mov'.format(min_idx)
+                trim_video(source, outfile, min_idx * 60 - 10, min_idx * 60)
                 all_outfiles.append(outfile)
+
                 if extract_template:
                     extract_template_frames(outfile)
         source.release()
 
     return all_outfiles
 
-def extract_template_frames(filename,name='temp1.jpg'):
-    src=cv2.VideoCapture(filename)
-    n_frames=src.get(cv2.CAP_PROP_FRAME_COUNT)
-    src.set(cv2.CAP_PROP_POS_FRAMES,int(n_frames//2))
-    ret,frame=src.read()
+
+def extract_template_frames(filename, name='temp1.jpg'):
+    src = cv2.VideoCapture(filename)
+    n_frames = src.get(cv2.CAP_PROP_FRAME_COUNT)
+    src.set(cv2.CAP_PROP_POS_FRAMES, int(n_frames // 2))
+    ret, frame = src.read()
     if ret:
-        frame_name=filename[:filename.rfind('/')+1]+name
-        cv2.imwrite(frame_name,frame)
+        frame_name = filename[:filename.rfind('/') + 1] + name
+        cv2.imwrite(frame_name, frame)
     else:
         print(('Could not read frame for file {}'.format(filename)))
     src.release()
 
-def extract_temp_from_folder(target_folder):
-    target_files=[f for f in os.listdir(target_folder) if f.endswith('.mov')]
-    for file in target_files:
-        imgname=file[:file.rfind('.')]+'.jpg'
-        extract_template_frames(target_folder+file,name=imgname)
 
-def find_min_dist(bounds,gray_binary,line_length,x_center,y_center,_theta,sign=1):
+def extract_temp_from_folder(target_folder):
+    target_files = [f for f in os.listdir(target_folder) if f.endswith('.mov')]
+    for file in target_files:
+        imgname = file[:file.rfind('.')] + '.jpg'
+        extract_template_frames(target_folder + file, name=imgname)
+
+
+def find_min_dist(bounds, gray_binary, line_length, x_center, y_center, _theta, sign=1):
     for r in range(line_length):
-        pointx=int(x_center+sign*r*np.cos(_theta))
-        pointy=int(y_center+sign*r*np.sin(_theta))
-        if bounds(pointx,pointy):
-            if gray_binary[pointx,pointy]:
-                min_dist_found=r
+        pointx = int(x_center + sign * r * np.cos(_theta))
+        pointy = int(y_center + sign * r * np.sin(_theta))
+        if bounds(pointx, pointy):
+            if gray_binary[pointx, pointy]:
+                min_dist_found = r
                 return min_dist_found
 
-def find_boundaries(imgname,debug=False):
-    image=cv2.imread(imgname,1)
-    gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    gray=cv2.blur(gray,(5,5))
-    _max=gray.max()
-    th,gray=cv2.threshold(gray,0.8*_max,_max,cv2.THRESH_BINARY)
-    gray_binary=(gray>0)
-    x,y=np.where(gray>1)
-    y_center,x_center=int(y.mean()),int(x.mean())
-    edges=cv2.Canny(gray,100,200)
-    line_length=1200
-    theta_amp=24*np.pi/180
-    theta_list=[]
-    rho_list=[]
-    bounds=lambda px,py: px<image.shape[0] and px>=0 and py<image.shape[1] and py>=0
-    endpoint=lambda d,t: (int(y_center+d*np.sin(t)),int(x_center+d*np.cos(t)))
-    
+
+def find_boundaries(imgname, debug=False):
+    image = cv2.imread(imgname, 1)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.blur(gray, (5, 5))
+    _max = gray.max()
+    th, gray = cv2.threshold(gray, 0.8 * _max, _max, cv2.THRESH_BINARY)
+    gray_binary = (gray > 0)
+    x, y = np.where(gray > 1)
+    y_center, x_center = int(y.mean()), int(x.mean())
+    edges = cv2.Canny(gray, 100, 200)
+    line_length = 1200
+    theta_amp = 24 * np.pi / 180
+    theta_list = []
+    rho_list = []
+    bounds = lambda px, py: px < image.shape[
+        0] and px >= 0 and py < image.shape[1] and py >= 0
+    endpoint = lambda d, t: (
+        int(y_center + d * np.sin(t)), int(x_center + d * np.cos(t)))
+
     for idx in range(200):
-        _theta=theta_amp*(-1+idx/100.0)
-        r=find_min_dist(bounds,gray_binary,line_length,x_center,y_center,_theta,sign=1)
+        _theta = theta_amp * (-1 + idx / 100.0)
+        r = find_min_dist(bounds, gray_binary, line_length,
+                          x_center, y_center, _theta, sign=1)
         theta_list.append(_theta)
         rho_list.append(r)
 
     if debug:
-        plt.plot(theta_list,rho_list,'r')
+        plt.plot(theta_list, rho_list, 'r')
         plt.show()
-    tilt_angle=theta_list[np.argmin(rho_list)]
-    print(('Pattern is titled by {:.2f} degree'.format(tilt_angle*180/np.pi)))
-    cv2.imwrite(imgname[:imgname.rfind('/')+1]+'check1.jpg',gray)
-    
-    min_dist_py=np.nanmin(np.array(rho_list,dtype=np.int32))
-    #print(min_dist_py)
-    min_dist_my=find_min_dist(bounds,gray_binary,line_length,x_center,y_center,tilt_angle,sign=-1)
-    min_dist_px=find_min_dist(bounds,gray_binary,line_length,x_center,y_center,tilt_angle+np.pi/2,sign=1)
-    min_dist_mx=find_min_dist(bounds,gray_binary,line_length,x_center,y_center,tilt_angle+np.pi/2,sign=-1)
-    
-    pointxmin=endpoint(-min_dist_mx,np.pi/2+tilt_angle)
-    pointxmax=endpoint(min_dist_px,np.pi/2+tilt_angle)
-    pointymin=endpoint(-min_dist_my,tilt_angle)
-    pointymax=endpoint(min_dist_py,tilt_angle)
+    tilt_angle = theta_list[np.argmin(rho_list)]
+    print(('Pattern is titled by {:.2f} degree'.format(
+        tilt_angle * 180 / np.pi)))
+    cv2.imwrite(imgname[:imgname.rfind('/') + 1] + 'check1.jpg', gray)
 
-    midx=((pointxmin[0]+pointxmax[0])//2)
-    midy=((pointymin[1]+pointymax[1])//2)
+    min_dist_py = np.nanmin(np.array(rho_list, dtype=np.int32))
+    # print(min_dist_py)
+    min_dist_my = find_min_dist(
+        bounds, gray_binary, line_length, x_center, y_center, tilt_angle, sign=-1)
+    min_dist_px = find_min_dist(
+        bounds, gray_binary, line_length, x_center, y_center, tilt_angle + np.pi / 2, sign=1)
+    min_dist_mx = find_min_dist(
+        bounds, gray_binary, line_length, x_center, y_center, tilt_angle + np.pi / 2, sign=-1)
 
-    cv2.line(image,(y_center,x_center),pointymax,255,2)
-    cv2.line(image,(y_center,x_center),pointymin,(0,255,0),2)
-    cv2.line(image,(y_center,x_center),pointxmax,(0,0,255),2)
-    cv2.line(image,(y_center,x_center),pointxmin,(255,255,255),2)
-    
-    cv2.circle(image,(midx,midy),(min_dist_py+min_dist_my)//2,255,2)
-    
-    ylim=lambda y0: (pointxmin[0]+(y0-pointxmin[1])/np.tan(tilt_angle+np.pi/2),\
-        (pointxmax[0]+(y0-pointxmax[1])/np.tan(tilt_angle+np.pi/2)))
-    xlim=lambda x0: (pointymin[1]+np.tan(tilt_angle)*(x0-pointymin[0]),\
-        pointymax[1]+np.tan(tilt_angle)*(x0-pointymax[0]))
+    pointxmin = endpoint(-min_dist_mx, np.pi / 2 + tilt_angle)
+    pointxmax = endpoint(min_dist_px, np.pi / 2 + tilt_angle)
+    pointymin = endpoint(-min_dist_my, tilt_angle)
+    pointymax = endpoint(min_dist_py, tilt_angle)
 
-    is_in_square=lambda x0,y0: x0<xlim(y0)[1] and x0>xlim(y0)[0] \
-                        and y0<ylim(x0)[1] and y0>ylim(x0)[0]
+    midx = ((pointxmin[0] + pointxmax[0]) // 2)
+    midy = ((pointymin[1] + pointymax[1]) // 2)
+
+    cv2.line(image, (y_center, x_center), pointymax, 255, 2)
+    cv2.line(image, (y_center, x_center), pointymin, (0, 255, 0), 2)
+    cv2.line(image, (y_center, x_center), pointxmax, (0, 0, 255), 2)
+    cv2.line(image, (y_center, x_center), pointxmin, (255, 255, 255), 2)
+
+    cv2.circle(image, (midx, midy), (min_dist_py + min_dist_my) // 2, 255, 2)
+
+    ylim = lambda y0: (pointxmin[0] + (y0 - pointxmin[1]) / np.tan(tilt_angle + np.pi / 2),
+                       (pointxmax[0] + (y0 - pointxmax[1]) / np.tan(tilt_angle + np.pi / 2)))
+    xlim = lambda x0: (pointymin[1] + np.tan(tilt_angle) * (x0 - pointymin[0]),
+                       pointymax[1] + np.tan(tilt_angle) * (x0 - pointymax[0]))
+
+    is_in_square = lambda x0, y0: x0 < xlim(y0)[1] and x0 > xlim(y0)[0] \
+        and y0 < ylim(x0)[1] and y0 > ylim(x0)[0]
 
     for idx in range(1000):
-        pt=(int(3840*np.random.random()),int(2160*np.random.random()))
-        if is_in_square(pt[1],pt[0]):
-            cv2.circle(image,pt,6,(0,255,0),-1)
+        pt = (int(3840 * np.random.random()), int(2160 * np.random.random()))
+        if is_in_square(pt[1], pt[0]):
+            cv2.circle(image, pt, 6, (0, 255, 0), -1)
         else:
-            cv2.circle(image,pt,6,(0,0,255),-1)
-    
-    cv2.imwrite(imgname[:imgname.rfind('/')+1]+'check2.jpg',image)
+            cv2.circle(image, pt, 6, (0, 0, 255), -1)
 
-    return xlim,ylim,is_in_square
+    cv2.imwrite(imgname[:imgname.rfind('/') + 1] + 'check2.jpg', image)
 
-def find_beads_in_sensing_area(fname,tracked_objs,total_frames, bead_radius,strict=True,debug=False,oldres=None):
-    frame=get_last_frame(fname) if fname.endswith('.mov') else cv2.imread(fname,1)
-    outname=fname[:fname.rfind('/')+1]+'last_frame.jpg'
-    cv2.imwrite(outname,frame)
-    
+    return xlim, ylim, is_in_square
+
+
+def find_beads_in_sensing_area(fname, tracked_objs, total_frames, bead_radius, strict=True, debug=False, oldres=None):
+    frame = get_last_frame(fname) if fname.endswith(
+        '.mov') else cv2.imread(fname, 1)
+    outname = fname[:fname.rfind('/') + 1] + 'last_frame.jpg'
+    cv2.imwrite(outname, frame)
+
     try:
-        xlim,ylim,is_in_square=find_boundaries(outname,debug=debug)
+        xlim, ylim, is_in_square = find_boundaries(outname, debug=debug)
     except Exception as e:
-        print(('Error in finding beads. '+str(e)))
-        xlim,ylim,is_in_square=oldres #works only if the first one doesn't work
+        print(('Error in finding beads. ' + str(e)))
+        xlim, ylim, is_in_square = oldres  # works only if the first one doesn't work
         print('Successfully recovered parameters from previous result')
-    
-    beads_in_sensing_area=[]
+
+    beads_in_sensing_area = []
     for t in tracked_objs:
-        if is_in_square(t.previous_centers[-1][1],t.previous_centers[-1][0]):
+        if is_in_square(t.previous_centers[-1][1], t.previous_centers[-1][0]):
             beads_in_sensing_area.append(t)
 
-    frame, n_stopped, _=highlight_stopped_beads(frame, beads_in_sensing_area,total_frames, bead_radius, std_threshold=1.0, strict=strict,end=-1)
-    return (frame,n_stopped,len(beads_in_sensing_area),(xlim,ylim,is_in_square))
+    frame, n_stopped, _ = highlight_stopped_beads(
+        frame, beads_in_sensing_area, total_frames, bead_radius, std_threshold=1.0, strict=strict, end=-1)
+    return (frame, n_stopped, len(beads_in_sensing_area), (xlim, ylim, is_in_square))
 
-def plot_pos_freq(tracked_objs,bnums,htmlname,fs=24.0,coord='x',pinam=6/1.0):
-    pixels_in_a_micron=pinam
-    figs=[]
-    p1=figure()
-    p2=figure(x_axis_type="log")#,y_axis_type="log")
-    p3=figure(x_axis_type="log")#,y_axis_type="log")
-    colors=['red','green','blue','black','orange','firebrick','fuchsia','indigo','magenta']
+
+def plot_pos_freq(tracked_objs, bnums, htmlname, fs=24.0, coord='x', pinam=6 / 1.0):
+    pixels_in_a_micron = pinam
+    figs = []
+    p1 = figure()
+    p2 = figure(x_axis_type="log")  # ,y_axis_type="log")
+    p3 = figure(x_axis_type="log")  # ,y_axis_type="log")
+    colors = ['red', 'green', 'blue', 'black', 'orange',
+              'firebrick', 'fuchsia', 'indigo', 'magenta']
     for b_num in bnums:
-        if coord=='x':
-            pos=[c[0]/pixels_in_a_micron for c in tracked_objs[b_num].previous_centers]
-        elif coord=='y':
-            pos=[c[1]/pixels_in_a_micron for c in tracked_objs[b_num].previous_centers]
-            
+        if coord == 'x':
+            pos = [
+                c[0] / pixels_in_a_micron for c in tracked_objs[b_num].previous_centers]
+        elif coord == 'y':
+            pos = [
+                c[1] / pixels_in_a_micron for c in tracked_objs[b_num].previous_centers]
+
         #l2dist=lambda tuple1,tuple2: np.sqrt((tuple1[0]-tuple2[0])**2+(tuple1[1]-tuple2[1])**2)/6.0
-        pos=[posn-pos[0] for posn in pos]
-        p1.line([idx/float(fs) for idx in range(len(pos))],pos,legend='Position (#'+str(b_num)+')',color=colors[bnums.index(b_num)])
-        n=len(pos)
-        len_out=n//2 + 1
-        maxf=fs/2.0 if n%2==0 else fs*(n-1)/(2.0*n)
-        frequencies=maxf*np.arange(len_out)/len_out
-        fftarr=np.fft.rfft(np.array(pos))
-        ys=np.abs(fftarr)
-        #print(fftarr)
-        phase=np.arctan(np.imag(fftarr)/np.real(fftarr))
-        #print(phase)
+        pos = [posn - pos[0] for posn in pos]
+        p1.line([idx / float(fs) for idx in range(len(pos))], pos,
+                legend='Position (#' + str(b_num) + ')', color=colors[bnums.index(b_num)])
+        n = len(pos)
+        len_out = n // 2 + 1
+        maxf = fs / 2.0 if n % 2 == 0 else fs * (n - 1) / (2.0 * n)
+        frequencies = maxf * np.arange(len_out) / len_out
+        fftarr = np.fft.rfft(np.array(pos))
+        ys = np.abs(fftarr)
+        # print(fftarr)
+        phase = np.arctan(np.imag(fftarr) / np.real(fftarr))
+        # print(phase)
         #ys[1:]*=2 #
-        p2.line(frequencies,np.log10(ys)/np.max(np.log10(ys)),legend='Frequency (#'+str(b_num)+')',color=colors[bnums.index(b_num)])
-        p3.line(frequencies,phase,legend='Phase (#'+str(b_num)+')',color=colors[bnums.index(b_num)])
-    
-    p1.xaxis.axis_label='Time (s)'
-    p1.yaxis.axis_label='Position (um)'
-    p1.legend.click_policy='hide'
-    p1.legend.location='top_right'
-    p2.xaxis.axis_label='Frequency (Hz)'
-    p2.yaxis.axis_label='Normalized log(Amplitude)'
-    p2.legend.click_policy='hide'
-    p3.xaxis.axis_label='Frequency (Hz)'
-    p3.yaxis.axis_label='Phase'
-    p3.legend.click_policy='hide'
-    figs.append([p1,p2])
+        p2.line(frequencies, np.log10(ys) / np.max(np.log10(ys)),
+                legend='Frequency (#' + str(b_num) + ')', color=colors[bnums.index(b_num)])
+        p3.line(frequencies, phase, legend='Phase (#' +
+                str(b_num) + ')', color=colors[bnums.index(b_num)])
+
+    p1.xaxis.axis_label = 'Time (s)'
+    p1.yaxis.axis_label = 'Position (um)'
+    p1.legend.click_policy = 'hide'
+    p1.legend.location = 'top_right'
+    p2.xaxis.axis_label = 'Frequency (Hz)'
+    p2.yaxis.axis_label = 'Normalized log(Amplitude)'
+    p2.legend.click_policy = 'hide'
+    p3.xaxis.axis_label = 'Frequency (Hz)'
+    p3.yaxis.axis_label = 'Phase'
+    p3.legend.click_policy = 'hide'
+    figs.append([p1, p2])
     figs.append([p3])
-    output_file(htmlname,title='Analysis of beads position')
-    grid=gridplot(figs)
+    output_file(htmlname, title='Analysis of beads position')
+    grid = gridplot(figs)
     show(grid)
 
-def count_beads(img,tmp,threshold=0.8,bead_radius=3):
-    frame=cv2.imread(img,1)
-    frame_orig=frame[:]
-    gray=cv2.imread(img,0)
-    template=cv2.imread(tmp,0)
+
+def count_beads(img, tmp, threshold=0.8, bead_radius=3):
+    frame = cv2.imread(img, 1)
+    frame_orig = frame[:]
+    gray = cv2.imread(img, 0)
+    template = cv2.imread(tmp, 0)
     print((frame.shape))
     print((template.shape))
-    res=cv2.matchTemplate(gray,template,cv2.TM_CCOEFF_NORMED)
-    loc=[np.where(res>=threshold)[0],np.where(res>=threshold)[1],res[np.where(res>=threshold)]]
-    loc=nms(loc)
-    tracked_objs=[]
-    txtfile=img[:img.rfind('.')]+'_data.txt'
+    res = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
+    loc = [np.where(res >= threshold)[0], np.where(
+        res >= threshold)[1], res[np.where(res >= threshold)]]
+    loc = nms(loc)
+    tracked_objs = []
+    txtfile = img[:img.rfind('.')] + '_data.txt'
     for pt in zip(*loc[::-1]):
-        center=(pt[0]+bead_radius//2,pt[1]+bead_radius//2)
-        frame=cv2.circle(frame,center,bead_radius,(0,255,0),1)
+        center = (pt[0] + bead_radius // 2, pt[1] + bead_radius // 2)
+        frame = cv2.circle(frame, center, bead_radius, (0, 255, 0), 1)
         tracked_objs.append(MovingObj(center))
-    highlighted,num_stopped,stopped_idxs=highlight_stopped_beads(frame_orig,tracked_objs,1,bead_radius,std_threshold=1.0)
-    cv2.imwrite(img[:img.rfind('.')+1]+'_{}_stopped_beads.jpg'.format(num_stopped),highlighted)
-    with open(img[:img.rfind('/')+1]+'num_tracked.txt','w') as f:
-        f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'\
-            .format(len(tracked_objs),num_stopped,num_stopped*100.0/float(len(tracked_objs))))
-    save_beads(txtfile,tracked_objs)
+    highlighted, num_stopped, stopped_idxs = highlight_stopped_beads(
+        frame_orig, tracked_objs, 1, bead_radius, std_threshold=1.0)
+    cv2.imwrite(img[:img.rfind('.') + 1] +
+                '_{}_stopped_beads.jpg'.format(num_stopped), highlighted)
+    with open(img[:img.rfind('/') + 1] + 'num_tracked.txt', 'w') as f:
+        f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'
+                .format(len(tracked_objs), num_stopped, num_stopped * 100.0 / float(len(tracked_objs))))
+    save_beads(txtfile, tracked_objs)
+
 
 def analyze_pictures(folder):
-    filenames=[]
-    subfolders=sorted([folder+f for f in os.listdir(folder) if os.path.isdir(folder+f)])
+    filenames = []
+    subfolders = sorted(
+        [folder + f for f in os.listdir(folder) if os.path.isdir(folder + f)])
     for f in subfolders:
         for g in sorted(os.listdir(f)):
             if g.endswith('.jpg') and 'temp1' not in g:
-                imagename=f+'/'+g
+                imagename = f + '/' + g
                 print(imagename)
-                template_file=f+'/temp1.jpg'
-                count_beads(imagename,template_file)
+                template_file = f + '/temp1.jpg'
+                count_beads(imagename, template_file)
                 filenames.append(imagename)
     return filenames
 
-def extract_frames(fname,frame_numbers):
-    source=cv2.VideoCapture(fname)
-    folder=fname[:fname.rfind('.mov')]
+
+def extract_frames(fname, frame_numbers):
+    source = cv2.VideoCapture(fname)
+    folder = fname[:fname.rfind('.mov')]
     if not os.path.exists(folder):
         os.mkdir(folder)
 
-    for idx,f in enumerate(frame_numbers):
-        source.set(cv2.CAP_PROP_POS_FRAMES,f)
-        ret,frame=source.read()
+    for idx, f in enumerate(frame_numbers):
+        source.set(cv2.CAP_PROP_POS_FRAMES, f)
+        ret, frame = source.read()
         if ret:
-            cv2.imwrite(folder+'/frame{}.jpg'.format(idx),frame)
+            cv2.imwrite(folder + '/frame{}.jpg'.format(idx), frame)
         else:
             print(('Could not read frame number {}'.format(f)))
 
     source.release()
 
+
 def controlled_play(fname):
-    src=cv2.VideoCapture(fname)
-    ret,frame=src.read()
+    src = cv2.VideoCapture(fname)
+    ret, frame = src.read()
     cv2.namedWindow("Video Player", cv2.WINDOW_NORMAL)
     nframes = int(src.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps= src.get(cv2.CAP_PROP_FPS)
-    onTrackbarSlide= lambda n:src.set(cv2.CAP_PROP_POS_FRAMES,n)
-    cv2.createTrackbar("Position", "Video Player", 0, nframes,onTrackbarSlide)
-    prev_pos=0
-    ret,frame=src.read()
-    play=True
+    fps = src.get(cv2.CAP_PROP_FPS)
+    onTrackbarSlide = lambda n: src.set(cv2.CAP_PROP_POS_FRAMES, n)
+    cv2.createTrackbar("Position", "Video Player", 0, nframes, onTrackbarSlide)
+    prev_pos = 0
+    ret, frame = src.read()
+    play = True
 
     while True:
-        current_pos = cv2.getTrackbarPos('Position','Video Player') #int(src.get(cv2.CAP_PROP_POS_FRAMES))
-        cv2.resizeWindow("Video Player",960,540)
+        # int(src.get(cv2.CAP_PROP_POS_FRAMES))
+        current_pos = cv2.getTrackbarPos('Position', 'Video Player')
+        cv2.resizeWindow("Video Player", 960, 540)
 
-        if current_pos!=prev_pos:
+        if current_pos != prev_pos:
             play = not play
-            src.set(cv2.CAP_PROP_POS_FRAMES,current_pos)
-            ret,frame=src.read()
-            prev_pos=current_pos
+            src.set(cv2.CAP_PROP_POS_FRAMES, current_pos)
+            ret, frame = src.read()
+            prev_pos = current_pos
 
         elif play:
-            ret,frame=src.read()
+            ret, frame = src.read()
             current_pos = int(src.get(cv2.CAP_PROP_POS_FRAMES))
-            prev_pos=current_pos
+            prev_pos = current_pos
 
-        cv2.imshow("Video Player",frame)
+        cv2.imshow(fname[fname.rfind('/') + 1:], frame)
         cv2.setTrackbarPos("Position", "Video Player", current_pos)
-        #print(current_pos)
-        k=cv2.waitKey(1)
-        if k==27:
+        # print(current_pos)
+        k = cv2.waitKey(1)
+        if k == 27:
             break
-        elif k==32: #space
-            play= not play
-            
-        elif k==115: #s
-            cv2.imwrite(fname[:fname.rfind('/')+1]+'frame.jpg',frame)
+        elif k == 32:  # space
+            play = not play
+
+        elif k == 115:  # s
+            cv2.imwrite(fname[:fname.rfind('/') + 1] + 'frame.jpg', frame)
             print('Current frame saved')
 
     cv2.destroyAllWindows()
     src.release()
 
 
-def crop_and_trim(fname,prev_points=None):
-    src=cv2.VideoCapture(fname)
-    ret,frame=src.read()
-    cv2.namedWindow("Video Player", cv2.WINDOW_NORMAL)
+def crop_and_trim(fname, prev_points=None):
+    src = cv2.VideoCapture(fname)
+    ret, frame = src.read()
+    winname = fname[fname.rfind('/') + 1:]
+    cv2.namedWindow(winname, cv2.WINDOW_NORMAL)
     nframes = int(src.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps= src.get(cv2.CAP_PROP_FPS)
-    onTrackbarSlide= lambda n:src.set(cv2.CAP_PROP_POS_FRAMES,n)
-    cv2.createTrackbar("Position", "Video Player", 0, nframes,onTrackbarSlide)
-    prev_pos=0
-    ret,frame=src.read()
-    points_list=[]
+    fps = src.get(cv2.CAP_PROP_FPS)
+    onTrackbarSlide = lambda n: src.set(cv2.CAP_PROP_POS_FRAMES, n)
+    cv2.createTrackbar("Position", winname, 0, nframes, onTrackbarSlide)
+    prev_pos = 0
+    ret, frame = src.read()
+    points_list = []
 
-    get_points= lambda e,x,y,flags, param: points_list.append((x, y)) if e==cv2.EVENT_LBUTTONDOWN else None
+    get_points = lambda e, x, y, flags, param: points_list.append(
+        (x, y)) if e == cv2.EVENT_LBUTTONDOWN else None
     cv2.setMouseCallback("Video Player", get_points)
-    play=True
+    play = True
 
     while True:
-        current_pos = cv2.getTrackbarPos('Position','Video Player') #int(src.get(cv2.CAP_PROP_POS_FRAMES))
-        cv2.resizeWindow("Video Player",960,540)
+        # int(src.get(cv2.CAP_PROP_POS_FRAMES))
+        current_pos = cv2.getTrackbarPos('Position', 'Video Player')
+        cv2.resizeWindow("Video Player", 960, 540)
 
-        if current_pos!=prev_pos:
+        if current_pos != prev_pos:
             play = not play
-            src.set(cv2.CAP_PROP_POS_FRAMES,current_pos)
-            ret,frame=src.read()
-            prev_pos=current_pos
+            src.set(cv2.CAP_PROP_POS_FRAMES, current_pos)
+            ret, frame = src.read()
+            prev_pos = current_pos
 
         elif play:
-            ret,frame=src.read()
+            ret, frame = src.read()
             current_pos = int(src.get(cv2.CAP_PROP_POS_FRAMES))
-            prev_pos=current_pos
+            prev_pos = current_pos
 
-        cv2.imshow("Video Player",frame)
+        cv2.imshow("Video Player", frame)
         cv2.setTrackbarPos("Position", "Video Player", current_pos)
-        #print(current_pos)
-        k=cv2.waitKey(1)
-        if k==27:
+        # print(current_pos)
+        k = cv2.waitKey(1)
+        if k == 27:
             break
-        elif k==ord('p'):
+        elif k == ord('p'):
             if prev_points:
-                points_list=prev_points[:]
+                points_list = prev_points[:]
                 print('Using previous dimensions')
                 break
             else:
                 print('No previous points specified')
 
-    x1,y1=points_list[0]
-    x2,y2=points_list[-1]
-    
-    assert x2 >= x1 ,'x2<x1'
-    assert y2 >= y1 ,'y2<y1'
+    x1, y1 = points_list[0]
+    x2, y2 = points_list[-1]
+
+    assert x2 >= x1, 'x2<x1'
+    assert y2 >= y1, 'y2<y1'
 
     print(points_list)
-    src.set(cv2.CAP_PROP_POS_FRAMES,0)
-    if not os.path.exists(fname[:fname.rfind('/')+1]+'tracking/'):
-        os.mkdir(fname[:fname.rfind('/')+1]+'tracking/')
+    src.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    if not os.path.exists(fname[:fname.rfind('/') + 1] + 'tracking/'):
+        os.mkdir(fname[:fname.rfind('/') + 1] + 'tracking/')
 
-    newname=fname[:fname.rfind('/')+1]+'tracking/{}'.format(fname[fname.rfind('/')+1:])
-    size=(x2-x1,y2-y1)
+    newname = fname[:fname.rfind('/') + 1] + \
+        'tracking/{}'.format(fname[fname.rfind('/') + 1:])
+    size = (x2 - x1, y2 - y1)
     print(size)
 
     if os.path.exists(newname):
         os.remove(newname)
 
-    sink=cv2.VideoWriter(newname,cv2.VideoWriter_fourcc('I','4','2','0'),fps,size)
-    ret,frame=src.read()
-    
+    sink = cv2.VideoWriter(newname, cv2.VideoWriter_fourcc(
+        *'mp4v'), fps, size)
+    ret, frame = src.read()
+
     while ret:
-        subframe=frame[y1:y2,x1:x2,:]
+        subframe = frame[y1:y2, x1:x2, :]
         sink.write(subframe)
-        ret,frame=src.read()
+        ret, frame = src.read()
 
     cv2.destroyAllWindows()
     src.release()
     sink.release()
     cv2.destroyAllWindows()
     print('Source and sink released')
-    return newname,points_list
+    return newname, points_list
 
-def track_video(fname,template_file,threshold):
-    video=cv2.VideoCapture(fname)
-    txtfile=fname[:fname.rfind('.')]+'_data.txt'
-    filename=fname[:fname.rfind('/')+1]+'analyzed_'+fname[fname.rfind('/')+1:]
-    num_frames_in_history=5
-    total_frames=video.get(cv2.CAP_PROP_FRAME_COUNT)
-    
+
+def track_video(fname, template_file, threshold, vidn=None, master=None, gui=None):
+    video = cv2.VideoCapture(fname)
+    txtfile = fname[:fname.rfind('.')] + '_data.txt'
+    filename = fname[:fname.rfind('/') + 1] + \
+        'analyzed_' + fname[fname.rfind('/') + 1:]
+    num_frames_in_history = 5
+    total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
+
     if os.path.exists(filename):
         os.remove(filename)
 
-    fps=video.get(cv2.CAP_PROP_FPS)
-    if (fps>0):
+    fps = video.get(cv2.CAP_PROP_FPS)
+    if (fps > 0):
         print('Successfully reading video file')
-    
-    size=(int(video.get(cv2.CAP_PROP_FRAME_WIDTH)),int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-    videoWriter=cv2.VideoWriter(filename,cv2.VideoWriter_fourcc('I','4','2','0'),fps,size)
 
-    tracked_objs=[]
-    osc_color='red'
-    nosc_color='green'
-    template=cv2.imread(template_file,0)
-    bead_radius=template.shape[0]//2
-    possible_new_objs=[]
+    size = (int(video.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    videoWriter = cv2.VideoWriter(
+        filename, cv2.VideoWriter_fourcc(*'mp4v'), fps, size)
 
-    prev1=np.zeros((size[1],size[0]),dtype=np.uint8)
-    prev2=np.zeros((size[1],size[0]),dtype=np.uint8)
+    tracked_objs = []
+    osc_color = 'red'
+    nosc_color = 'green'
+    template = cv2.imread(template_file, 0)
+    bead_radius = template.shape[0] // 2
+    possible_new_objs = []
 
-    dist = lambda obj,cen: np.sqrt(np.sum((np.array(obj.previous_centers[-1])-np.array(cen))**2))
-    ret,frame=video.read()
-    count=0
-    #cv2.imwrite('frame.jpg',frame)
+    prev1 = np.zeros((size[1], size[0]), dtype=np.uint8)
+    prev2 = np.zeros((size[1], size[0]), dtype=np.uint8)
+
+    dist = lambda obj, cen: np.sqrt(
+        np.sum((np.array(obj.previous_centers[-1]) - np.array(cen))**2))
+    ret, frame = video.read()
+    count = 0
+    # cv2.imwrite('frame.jpg',frame)
+
     while (ret):
-        count+=ret
-        last_frame=frame[:]
-        current_centers=[]
-        gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-        #gray=cv2.GaussianBlur(gray,(5,5),3,3)
-        res=cv2.matchTemplate(gray,template,cv2.TM_CCOEFF_NORMED)
-        loc=[np.where(res>=threshold)[0],np.where(res>=threshold)[1],res[np.where(res>=threshold)]]
-        loc=nms(loc)
-        sys.stdout.write("\r"+"Progress: {:.3f} %".format(float(100*count)/total_frames))
-        sys.stdout.flush()
+        count += ret
+        last_frame = frame[:]
+        current_centers = []
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # gray=cv2.GaussianBlur(gray,(5,5),3,3)
+        res = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
+        loc = [np.where(res >= threshold)[0], np.where(
+            res >= threshold)[1], res[np.where(res >= threshold)]]
+        loc = nms(loc)
+        if gui:
+            gui['text'] = ("Video {} of {}, Progress: {:.3f} %".format(
+                vidn[0], vidn[1], float(100 * count) / total_frames))
+            master.update_idletasks()
+        else:
+            sys.stdout.write(
+                "\r" + "Progress: {:.3f} %".format(float(100 * count) / total_frames))
+            sys.stdout.flush()
         for pt in zip(*loc[::-1]):
-            center=(pt[0]+bead_radius//2,pt[1]+bead_radius//2)
-            frame=cv2.circle(frame,center,bead_radius,(0,255,0),1)
-            if count<=num_frames_in_history:
+            center = (pt[0] + bead_radius // 2, pt[1] + bead_radius // 2)
+            frame = cv2.circle(frame, center, bead_radius, (0, 255, 0), 1)
+            if count <= num_frames_in_history:
                 for obj in tracked_objs:
-                    if dist(obj,center)<5*bead_radius:
+                    if dist(obj, center) < 5 * bead_radius:
                         break
                 else:
                     tracked_objs.append(MovingObj(center))
                     tracked_objs[-1].tracked_frame_indices.append(count)
             else:
-                #frame=cv2.circle(frame,center,radius,(0,255,255),2)
+                # frame=cv2.circle(frame,center,radius,(0,255,255),2)
                 current_centers.append(center)
 
         if count > num_frames_in_history:
-            matchcentertoobj(current_centers,tracked_objs,frame_idx=count)
-            are_oscillating=[idx for idx,b in enumerate(tracked_objs) if hasattr(b,'is_oscillating') and b.is_oscillating]
-            not_oscillating=[idx for idx,b in enumerate(tracked_objs) if hasattr(b,'is_oscillating') and not b.is_oscillating]
-            prev1,frame = drawtrajectory(prev1,tracked_objs,frame,are_oscillating,osc_color)
-            prev2,frame = drawtrajectory(prev2,tracked_objs,frame,not_oscillating,nosc_color)
+            matchcentertoobj(current_centers, tracked_objs, frame_idx=count)
+            are_oscillating = [idx for idx, b in enumerate(
+                tracked_objs) if hasattr(b, 'is_oscillating') and b.is_oscillating]
+            not_oscillating = [idx for idx, b in enumerate(tracked_objs) if hasattr(
+                b, 'is_oscillating') and not b.is_oscillating]
+            prev1, frame = drawtrajectory(
+                prev1, tracked_objs, frame, are_oscillating, osc_color)
+            prev2, frame = drawtrajectory(
+                prev2, tracked_objs, frame, not_oscillating, nosc_color)
 
         videoWriter.write(frame)
-        ret,frame=video.read()
+        ret, frame = video.read()
 
-    etime=-10 #not used
+    etime = -10  # not used
 
-    frame=writedistances(last_frame,tracked_objs,etime)
+    frame = writedistances(last_frame, tracked_objs, etime)
     videoWriter.write(frame)
     videoWriter.release()
     video.release()
-    stoppedtxt=txtfile[:txtfile.rfind('.')]+'_stopped.txt'
-    stoppedtxt_easy=txtfile[:txtfile.rfind('.')]+'_stopped_easy.txt'
-    save_beads(txtfile,tracked_objs)
-    cv2.imwrite(fname[:fname.rfind('.')]+'_tracked_objs.jpg',frame)
+    stoppedtxt = txtfile[:txtfile.rfind('.')] + '_stopped.txt'
+    stoppedtxt_easy = txtfile[:txtfile.rfind('.')] + '_stopped_easy.txt'
+    save_beads(txtfile, tracked_objs)
+    cv2.imwrite(fname[:fname.rfind('.')] + '_tracked_objs.jpg', frame)
     text2csv(txtfile)
     try:
-        last_frame_of_video=get_last_frame(fname)
+        last_frame_of_video = get_last_frame(fname)
     except Exception as e:
         print((str(e)))
-        last_frame_of_video=frame[:]
-        
-    highlighted,num_stopped,stopped_idxs=highlight_stopped_beads(last_frame_of_video,tracked_objs,total_frames,bead_radius,std_threshold=1.0)
-    highlighted_easy,num_stopped_easy,stopped_idxs_easy=highlight_stopped_beads(last_frame_of_video,tracked_objs,total_frames,bead_radius,std_threshold=1.0,strict=False)
-    cv2.imwrite(fname[:fname.rfind('.')+1]+'_{}_stopped_beads.jpg'.format(num_stopped),highlighted)
-    cv2.imwrite(fname[:fname.rfind('.')+1]+'_{}_stopped_beads_easy.jpg'.format(num_stopped_easy),highlighted_easy)
+        last_frame_of_video = frame[:]
 
-    save_beads(stoppedtxt,[tracked_objs[idx] for idx in stopped_idxs])
-    save_beads(stoppedtxt_easy,[tracked_objs[idx] for idx in stopped_idxs_easy])
+    highlighted, num_stopped, stopped_idxs = highlight_stopped_beads(
+        last_frame_of_video, tracked_objs, total_frames, bead_radius, std_threshold=1.0)
+    highlighted_easy, num_stopped_easy, stopped_idxs_easy = highlight_stopped_beads(
+        last_frame_of_video, tracked_objs, total_frames, bead_radius, std_threshold=1.0, strict=False)
+    cv2.imwrite(fname[:fname.rfind('.') + 1] +
+                '_{}_stopped_beads.jpg'.format(num_stopped), highlighted)
+    cv2.imwrite(fname[:fname.rfind(
+        '.') + 1] + '_{}_stopped_beads_easy.jpg'.format(num_stopped_easy), highlighted_easy)
 
-    if num_stopped>0:
+    save_beads(stoppedtxt, [tracked_objs[idx] for idx in stopped_idxs])
+    save_beads(stoppedtxt_easy, [tracked_objs[idx]
+                                 for idx in stopped_idxs_easy])
+
+    if num_stopped > 0:
         text2csv(stoppedtxt)
 
-    if num_stopped_easy>0:
+    if num_stopped_easy > 0:
         text2csv(stoppedtxt_easy)
 
-    with open(fname[:fname.rfind('/')+1]+'correspondence.txt','w') as f:
+    with open(fname[:fname.rfind('/') + 1] + 'correspondence.txt', 'w') as f:
         f.write(str([b for b in enumerate(stopped_idxs)]))
 
-    with open(fname[:fname.rfind('/')+1]+'num_tracked.txt','w') as f:
-        f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'\
-            .format(len(tracked_objs),num_stopped,num_stopped*100.0/float(len(tracked_objs))))
+    with open(fname[:fname.rfind('/') + 1] + 'num_tracked.txt', 'w') as f:
+        f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'
+                .format(len(tracked_objs), num_stopped, num_stopped * 100.0 / float(len(tracked_objs))))
