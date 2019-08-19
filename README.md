@@ -10,4 +10,5 @@ conda activate tracking
 git clone http://www/github.com/dataplayer12/tracking
 cd tracking
 pip install -r requirements.txt
+conda install -c menpo opencv
 ```
