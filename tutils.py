@@ -969,8 +969,3 @@ def track_video(fname,template_file,threshold):
     with open(fname[:fname.rfind('/')+1]+'num_tracked.txt','w') as f:
         f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'\
             .format(len(tracked_objs),num_stopped,num_stopped*100.0/float(len(tracked_objs))))
-
-if __name__ == '__main__':
-    folder='/Users/Jaiyam/Dropbox/New Beads Videos/20181203 SAM 15uM/tracking/expt3/'
-    tracked_objs=load_beads(folder+'20181203_sam_15uM_3_data_stopped.txt')
-    nores=save_to_audio(tracked_objs,np.arange(len(tracked_objs)),folder) #[15,34,36,43]
