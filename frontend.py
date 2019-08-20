@@ -73,7 +73,8 @@ def app(database):
         'f6': tk.Frame(center_frame, borderwidth=2, relief='raised'),
         'f7': tk.Frame(center_frame, borderwidth=2, relief='raised'),
         'f8': tk.Frame(center_frame, borderwidth=0, relief='raised'),
-        'f9': tk.Frame(center_frame, borderwidth=0, relief='raised')
+        'f9': tk.Frame(center_frame, borderwidth=0, relief='raised'),
+        'f10': tk.Frame(center_frame, borderwidth=0, relief='raised')
     }
 
     labels = {
@@ -87,6 +88,8 @@ def app(database):
         'crop': tk.Label(frames['f6'], text='Crop Video? '),
         'threshold': tk.Label(frames['f7'], text='Template matching threshold: '),
         'sb': tk.Label(frames['f8'], text='Analyze stopped beads? '),
+        'parallel': tk.Label(frames['f9'], text='Use parallel threads? '),
+        'gpu': tk.Label(frames['f10'], text='Use GPU? '),
     }
 
     # http://effbot.org/tkinterbook/variable.htm
@@ -101,6 +104,8 @@ def app(database):
         'trime': tk.IntVar(),
         'threshold': tk.DoubleVar(),
         'sb': tk.StringVar(),
+        'parallel':tk.StringVar(),
+        'gpu':tk.StringVar(),
         'affa': []
     }
 
@@ -115,6 +120,8 @@ def app(database):
         variables['em'].set('Yes')
         variables['sb'].set('Yes')
         variables['threshold'].set(0.8)
+        variables['parallel'].set('No')
+        variables['gpu'].set('No')
         variables['affa'] = []
 
     entries = {
@@ -132,6 +139,8 @@ def app(database):
         'crop': tk.OptionMenu(frames['f6'], variables['crop'], *['Yes', 'No']),
         'threshold': tk.Entry(frames['f7'], textvariable=variables['threshold'], width=4),
         'sb': tk.OptionMenu(frames['f8'], variables['sb'], *['Yes', 'No']),
+        'parallel': tk.OptionMenu(frames['f9'], variables['parallel'], *['Yes', 'No']),
+        'gpu': tk.OptionMenu(frames['f10'], variables['gpu'], *['Yes', 'No']),
     }
 
     def store_template(*args):
@@ -208,6 +217,7 @@ def app(database):
                 variables['affa']=trimmed_videos[:]
 
         elif isyes('crop'):
+            #no trim, only crop
             if isyes('folderjob'):
                 folder = folder[:folder.rfind('/') + 1]
                 try_create(folder + 'tracking/')
@@ -219,7 +229,10 @@ def app(database):
                     footer['text']='Cropped video {} of {}'.format(idx+1,len(trimmed_videos))
                     window.update_idletasks()
             else:
-                pass
+                cropped,_=tutils.crop_and_trim(folder)
+                variables['affa'].append(cropped)
+                footer['text']='Cropped one video'
+                window.update_idletasks()
         else:
             footer['text'] = 'You have not enabled trimming'
 
