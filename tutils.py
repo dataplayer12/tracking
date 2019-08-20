@@ -522,10 +522,11 @@ def trim_video(source, outfile, start, end):
     sink.release()
 
 
-def extract_videos_for_processing(target_folder, extract_template=False, filemode=False, gui=None):
+def extract_videos_for_processing(target_folder, extract_template=False, filemode=False, guivar=None):
     all_outfiles = []
     if filemode:
-        target_files = [target_folder]
+        target_files = [target_folder[target_folder.rfind('/')+1:]]
+        target_folder=target_folder[:target_folder.rfind('/')+1]
         analysis_folder = target_folder[
             :target_folder.rfind('/') + 1] + 'tracking/'
 
@@ -541,6 +542,7 @@ def extract_videos_for_processing(target_folder, extract_template=False, filemod
         analysis_subfolder = analysis_folder + \
             srcfile[:srcfile.rfind('.')] + '/'
         infile = target_folder + srcfile
+        print(infile)
         source = cv2.VideoCapture(infile)
         n_clips = 1 + int(source.get(cv2.CAP_PROP_FRAME_COUNT) /
                           (60 * source.get(cv2.CAP_PROP_FPS)))
@@ -548,10 +550,10 @@ def extract_videos_for_processing(target_folder, extract_template=False, filemod
         if not os.path.isdir(analysis_subfolder):
             os.mkdir(analysis_subfolder)
             for min_idx in range(1, n_clips):
-                if gui:
-                    gui[0].text = 'Processing Video {}/{}, Trimming clip {}/{}'.format(
-                        idx, len(target_files), min_idx, n_clips)
-                    gui[1].update_idletasks()
+                if guivar:
+                    guivar[0].set('Processing Video {}/{}, Trimming clip {}/{}'.format(
+                        idx+1, len(target_files), min_idx, n_clips-1))
+                    guivar[1].update_idletasks()
                 time_folder = analysis_subfolder + '{}m/'.format(min_idx)
                 os.mkdir(time_folder)
                 outfile = time_folder + \
@@ -937,7 +939,7 @@ def crop_and_trim(fname, prev_points=None):
     return newname, points_list
 
 
-def track_video(fname, template_file, threshold, vidn=None, master=None, gui=None):
+def track_video(fname, template_file, threshold, vidn=None, guivar=None):
     video = cv2.VideoCapture(fname)
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
     filename = fname[:fname.rfind('/') + 1] + \
@@ -983,10 +985,9 @@ def track_video(fname, template_file, threshold, vidn=None, master=None, gui=Non
         loc = [np.where(res >= threshold)[0], np.where(
             res >= threshold)[1], res[np.where(res >= threshold)]]
         loc = nms(loc)
-        if gui:
-            gui['text'] = ("Video {} of {}, Progress: {:.3f} %".format(
+        if guivar:
+            guivar.set("Video {} of {}, Progress: {:.3f} %".format(
                 vidn[0], vidn[1], float(100 * count) / total_frames))
-            master.update_idletasks()
         else:
             sys.stdout.write(
                 "\r" + "Progress: {:.3f} %".format(float(100 * count) / total_frames))

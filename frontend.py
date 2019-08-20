@@ -106,6 +106,7 @@ def app(database):
         'sb': tk.StringVar(),
         'parallel':tk.StringVar(),
         'gpu':tk.StringVar(),
+        'status':tk.StringVar(),
         'affa': []
     }
 
@@ -124,11 +125,13 @@ def app(database):
         variables['gpu'].set('No')
         variables['affa'] = []
 
+    template_text='Browse...' if not cfg.last_template else cfg.last_template
+
     entries = {
-        'folder': tk.Button(frames['f1'], text="Browse...", command=get_folder, bg='dark green',
-                            fg='black', relief='raised', width=10, font=('Helvetica 9 bold')),
-        'template': tk.Button(frames['f2'], text="Browse...", command=get_template, bg='dark green',
-                              fg='black', relief='raised', width=10, font=('Helvetica 9 bold')),
+        'folder': tk.Button(frames['f1'], text='Browse...', command=get_folder, bg='dark green',
+                            fg='black', relief='raised', width=50,height=2, font=('Helvetica 9 bold')),
+        'template': tk.Button(frames['f2'], text=template_text, command=get_template, bg='dark green',
+                              fg='black', relief='raised', width=50, height=2, font=('Helvetica 9 bold')),
         'folderjob': tk.OptionMenu(frames['f3'], variables['folderjob'], *['Yes', 'No']),
         # tk.Checkbutton(frames['f3'], text="Analyze all videos in this folder",
         #                    variable=variables['folderjob']),
@@ -148,6 +151,7 @@ def app(database):
             f.write(variables['template'].get())
 
     set_defaults()
+    footer.configure(textvariable=variables['status'])
     variables['template'].trace('w', store_template)
     #to_city_entry.bind("<KeyRelease>", caps_to)
 
@@ -175,7 +179,7 @@ def app(database):
         def trim_helper(folder, em, filemode):
             if em:
                 outfiles = tutils.extract_videos_for_processing(
-                    folder, filemode,gui=[footer,window])
+                    folder,False, filemode,guivar=[variables['status'],window])
 
                 trimmed_videos.extend(outfiles)
             else:
@@ -195,8 +199,7 @@ def app(database):
 
                     newfile = tutils.crop_and_trim(f)
                     trimmed_videos.append(newfile)
-                    footer['text']='Trimmed video {} of {}'.format(idx+1,len(files))
-                    window.update_idletasks()
+                    variables['status'].set('Trimmed video {} of {}'.format(idx+1,len(files)))
 
         if isyes('trim'):
             if isyes('folderjob'):
@@ -211,8 +214,7 @@ def app(database):
                 for f in trimmed_videos:
                     cropped,prev_points=tutils.crop_and_trim(f,prev_points)
                     variables['affa'].append(cropped)
-                    footer['text']='Cropped video {} of {}'.format(idx+1,len(trimmed_videos))
-                    window.update_idletasks()
+                    variables['status'].set('Cropped video {} of {}'.format(idx+1,len(trimmed_videos)))
             else:
                 variables['affa']=trimmed_videos[:]
 
@@ -226,43 +228,42 @@ def app(database):
                 for idx,f in enumerate(trimmed_videos):
                     cropped,prev_points=tutils.crop_and_trim(f,prev_points)
                     variables['affa'].append(cropped)
-                    footer['text']='Cropped video {} of {}'.format(idx+1,len(trimmed_videos))
+                    variables['status'].set('Cropped video {} of {}'.format(idx+1,len(trimmed_videos)))
                     window.update_idletasks()
             else:
                 cropped,_=tutils.crop_and_trim(folder)
                 variables['affa'].append(cropped)
-                footer['text']='Cropped one video'
-                window.update_idletasks()
+                variables['status'].set('Cropped one video')
+                #window.update_idletasks()
         else:
-            footer['text'] = 'You have not enabled trimming'
-
+            #footer['text'] = 'You have not enabled trimming'
+            variables['status'].set('You have not enabled trimming')
 
     def run_app():
         for idx, vid in enumerate(variables['affa'].get()):
             temp = variables['template'].get()
             th = variables['threshold'].get()
             vidn = [idx + 1, len(variables['affa'].get())]
-            tutils.track_video(vid, temp, th, vidn=vidn,
-                               master=window, gui=footer)
+            tutils.track_video(vid, temp, th, vidn=vidn, guivar=variables['status'])
 
     def refresh_app():
         set_defaults()
 
     # a proper app needs some buttons too!
     button_trim = tk.Button(bottom_frame, text="Trim & Crop", command=trim_crop_video_fn,
-                            bg='dark red', fg='black', relief='raised', width=17, font=('Helvetica 12'))
+                            bg='dark red', fg='black', relief='raised', width=20, height=2, font=('Helvetica 12'))
     button_trim.grid(column=0, row=0, sticky='e', padx=100, pady=2)
 
     button_refresh = tk.Button(bottom_frame, text="Refresh", command=refresh_app,
-                               bg='dark red', fg='black', relief='raised', width=17, font=('Helvetica 12'))
+                               bg='dark red', fg='black', relief='raised', width=20,height=2, font=('Helvetica 12'))
     button_refresh.grid(column=1, row=0, sticky='e', padx=100, pady=2)
 
     button_run = tk.Button(bottom_frame, text="Track video", command=run_app, bg='dark green',
-                           fg='black', relief='raised', width=20, font=('Helvetica 9 bold'))
+                           fg='black', relief='raised', width=20, height=2, font=('Helvetica 12 bold'))
     button_run.grid(column=0, row=1, sticky='w', padx=100, pady=2)
 
     button_close = tk.Button(bottom_frame, text="Exit", command=close_app,
-                             bg='dark red', fg='black', relief='raised', width=20, font=('Helvetica 9'))
+                             bg='dark red', fg='black', relief='raised', width=20, height=2, font=('Helvetica 12'))
     button_close.grid(column=1, row=1, sticky='e', padx=100, pady=2)
 
     window.mainloop()
