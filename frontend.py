@@ -9,6 +9,7 @@ import os
 import config as cfg
 import tutils
 
+
 def app(database):
     window = tk.Tk()  # you may also see it named as "root" in other sources
 
@@ -104,9 +105,9 @@ def app(database):
         'trime': tk.IntVar(),
         'threshold': tk.DoubleVar(),
         'sb': tk.StringVar(),
-        'parallel':tk.StringVar(),
-        'gpu':tk.StringVar(),
-        'status':tk.StringVar(),
+        'parallel': tk.StringVar(),
+        'gpu': tk.StringVar(),
+        'status': tk.StringVar(),
         'affa': []
     }
 
@@ -125,11 +126,11 @@ def app(database):
         variables['gpu'].set('No')
         variables['affa'] = []
 
-    template_text='Browse...' if not cfg.last_template else cfg.last_template
+    template_text = 'Browse...' if not cfg.last_template else cfg.last_template
 
     entries = {
         'folder': tk.Button(frames['f1'], text='Browse...', command=get_folder, bg='dark green',
-                            fg='black', relief='raised', width=50,height=2, font=('Helvetica 9 bold')),
+                            fg='black', relief='raised', width=50, height=2, font=('Helvetica 9 bold')),
         'template': tk.Button(frames['f2'], text=template_text, command=get_template, bg='dark green',
                               fg='black', relief='raised', width=50, height=2, font=('Helvetica 9 bold')),
         'folderjob': tk.OptionMenu(frames['f3'], variables['folderjob'], *['Yes', 'No']),
@@ -167,7 +168,7 @@ def app(database):
     def close_app():
         window.destroy()
 
-    isyes=lambda v: variables[v].get() == 'Yes'
+    isyes = lambda v: variables[v].get() == 'Yes'
 
     def try_create(f): os.mkdir(f) if not os.path.exists(f) else None
 
@@ -179,7 +180,7 @@ def app(database):
         def trim_helper(folder, em, filemode):
             if em:
                 outfiles = tutils.extract_videos_for_processing(
-                    folder,False, filemode,guivar=[variables['status'],window])
+                    folder, False, filemode, guivar=[variables['status'], window])
 
                 trimmed_videos.extend(outfiles)
             else:
@@ -199,7 +200,8 @@ def app(database):
 
                     newfile = tutils.crop_and_trim(f)
                     trimmed_videos.append(newfile)
-                    variables['status'].set('Trimmed video {} of {}'.format(idx+1,len(files)))
+                    variables['status'].set(
+                        'Trimmed video {} of {}'.format(idx + 1, len(files)))
 
         if isyes('trim'):
             if isyes('folderjob'):
@@ -208,43 +210,52 @@ def app(database):
                 trim_helper(folder, isyes('em'), False)
             else:
                 trim_helper(folder, isyes('em'), True)
-            
+
             if isyes('crop'):
-                prev_points=[]
+                prev_points = []
                 for f in trimmed_videos:
-                    cropped,prev_points=tutils.crop_and_trim(f,prev_points)
+                    cropped, prev_points = tutils.crop_and_trim(f, prev_points)
                     variables['affa'].append(cropped)
-                    variables['status'].set('Cropped video {} of {}'.format(idx+1,len(trimmed_videos)))
+                    variables['status'].set(
+                        'Cropped video {} of {}'.format(idx + 1, len(trimmed_videos)))
             else:
-                variables['affa']=trimmed_videos[:]
+                variables['affa'] = trimmed_videos[:]
 
         elif isyes('crop'):
-            #no trim, only crop
+            # no trim, only crop
             if isyes('folderjob'):
                 folder = folder[:folder.rfind('/') + 1]
                 try_create(folder + 'tracking/')
-                trimmed_videos=os.listdir(folder)
-                prev_points=[]
-                for idx,f in enumerate(trimmed_videos):
-                    cropped,prev_points=tutils.crop_and_trim(f,prev_points)
+                trimmed_videos = os.listdir(folder)
+                prev_points = []
+                for idx, f in enumerate(trimmed_videos):
+                    cropped, prev_points = tutils.crop_and_trim(f, prev_points)
                     variables['affa'].append(cropped)
-                    variables['status'].set('Cropped video {} of {}'.format(idx+1,len(trimmed_videos)))
+                    variables['status'].set(
+                        'Cropped video {} of {}'.format(idx + 1, len(trimmed_videos)))
                     window.update_idletasks()
             else:
-                cropped,_=tutils.crop_and_trim(folder)
+                cropped, _ = tutils.crop_and_trim(folder)
                 variables['affa'].append(cropped)
                 variables['status'].set('Cropped one video')
-                #window.update_idletasks()
+                # window.update_idletasks()
         else:
             #footer['text'] = 'You have not enabled trimming'
             variables['status'].set('You have not enabled trimming')
 
     def run_app():
-        for idx, vid in enumerate(variables['affa'].get()):
+        if not variables['affa'] and variables['folder'].get():
+            variables['affa'].append(variables['folder'].get())
+
+        for idx, vid in enumerate(variables['affa']):
             temp = variables['template'].get()
             th = variables['threshold'].get()
-            vidn = [idx + 1, len(variables['affa'].get())]
-            tutils.track_video(vid, temp, th, vidn=vidn, guivar=variables['status'])
+            sb = isyes('sb')
+            vidn = [idx + 1, len(variables['affa'])]
+            tutils.track_video(vid, temp, th, sb, vidn=vidn,
+                               guivar=variables['status'])
+
+        variables['status'].set('Finished tracking')
 
     def refresh_app():
         set_defaults()
@@ -255,7 +266,7 @@ def app(database):
     button_trim.grid(column=0, row=0, sticky='e', padx=100, pady=2)
 
     button_refresh = tk.Button(bottom_frame, text="Refresh", command=refresh_app,
-                               bg='dark red', fg='black', relief='raised', width=20,height=2, font=('Helvetica 12'))
+                               bg='dark red', fg='black', relief='raised', width=20, height=2, font=('Helvetica 12'))
     button_refresh.grid(column=1, row=0, sticky='e', padx=100, pady=2)
 
     button_run = tk.Button(bottom_frame, text="Track video", command=run_app, bg='dark green',

@@ -12,6 +12,7 @@ from scipy.io import wavfile
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import pdb
+import time
 
 FPS = 24
 F_0 = 0.5
@@ -153,6 +154,41 @@ class MovingObj:
             p.line(self.fft_frequencies, self.y_fft, color=color)
         if display:
             show(p)
+
+
+class Waitbar(object):
+
+    def __init__(self, winname, size=[500, 100], color=[0, 0, 255]):
+        self.winname = winname
+        self.color = np.array(color)
+        self.window = cv2.namedWindow(winname, cv2.WINDOW_NORMAL)
+        self.winsize = size
+        cv2.resizeWindow(self.winname, size[0], size[1])
+        self.blank = 255 * np.ones((size[1], size[0], 3), dtype=np.uint8)
+        self.pixel_level = 0
+        self.start_time = time.time()
+
+    def update(self, level):
+        remaining = self.estimate_time_remaining(level)
+        image = np.copy(self.blank)
+        self.pixel_level = int(level * self.winsize[0])
+
+        image[int(0.3 * self.winsize[1]):-int(0.3 * self.winsize[1]),
+              :self.pixel_level, :] = self.color
+        msg = '{:.2f} % Done'.format(level * 100)
+        cv2.putText(image, msg, (0, int(0.2 * self.winsize[1])),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+        sec = int(remaining - 60 * (remaining // 60))
+        msg = 'Time remaining: {} min, {} seconds'.format(
+            int(remaining // 60), sec)
+        cv2.putText(image, msg, (0, int(0.9 * self.winsize[1])),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+        return image
+
+    def estimate_time_remaining(self, level):
+        speed = level / (time.time() - self.start_time)
+        remaining = (1 / speed) - level
+        return remaining
 
 
 def nms(data, th=0.1, w=13):
@@ -525,8 +561,8 @@ def trim_video(source, outfile, start, end):
 def extract_videos_for_processing(target_folder, extract_template=False, filemode=False, guivar=None):
     all_outfiles = []
     if filemode:
-        target_files = [target_folder[target_folder.rfind('/')+1:]]
-        target_folder=target_folder[:target_folder.rfind('/')+1]
+        target_files = [target_folder[target_folder.rfind('/') + 1:]]
+        target_folder = target_folder[:target_folder.rfind('/') + 1]
         analysis_folder = target_folder[
             :target_folder.rfind('/') + 1] + 'tracking/'
 
@@ -552,7 +588,7 @@ def extract_videos_for_processing(target_folder, extract_template=False, filemod
             for min_idx in range(1, n_clips):
                 if guivar:
                     guivar[0].set('Processing Video {}/{}, Trimming clip {}/{}'.format(
-                        idx+1, len(target_files), min_idx, n_clips-1))
+                        idx + 1, len(target_files), min_idx, n_clips - 1))
                     guivar[1].update_idletasks()
                 time_folder = analysis_subfolder + '{}m/'.format(min_idx)
                 os.mkdir(time_folder)
@@ -939,13 +975,14 @@ def crop_and_trim(fname, prev_points=None):
     return newname, points_list
 
 
-def track_video(fname, template_file, threshold, vidn=None, guivar=None):
+def track_video(fname, template_file, threshold, log_stopped=True, vidn=None, guivar=None):
     video = cv2.VideoCapture(fname)
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
     filename = fname[:fname.rfind('/') + 1] + \
         'analyzed_' + fname[fname.rfind('/') + 1:]
     num_frames_in_history = 5
     total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
+    bar = Waitbar(filename[filename.rfind('/') + 1:])
 
     if os.path.exists(filename):
         os.remove(filename)
@@ -986,8 +1023,11 @@ def track_video(fname, template_file, threshold, vidn=None, guivar=None):
             res >= threshold)[1], res[np.where(res >= threshold)]]
         loc = nms(loc)
         if guivar:
-            guivar.set("Video {} of {}, Progress: {:.3f} %".format(
-                vidn[0], vidn[1], float(100 * count) / total_frames))
+            img = bar.update(float(count) / total_frames)
+            cv2.imshow(bar.winname, img)
+            k = cv2.waitKey(1)
+            # guivar.set("Video {} of {}, Progress: {:.3f} %".format(
+            #    vidn[0], vidn[1], float(100 * count) / total_frames))
         else:
             sys.stdout.write(
                 "\r" + "Progress: {:.3f} %".format(float(100 * count) / total_frames))

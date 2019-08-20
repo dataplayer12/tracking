@@ -26,3 +26,6 @@ This will bring up a graphical user interface as below:
 ![gui](https://github.com/dataplayer12/tracking/blob/master/gui.png)
 
 The GUI is easy to use and is still under some development. Basic tracking functionality with a single process and thread is available int he current version.
+
+During tracking the software displays a progress bar:
+![waitbar](https://github.com/dataplayer12/tracking/blob/master/waitbar.png)
