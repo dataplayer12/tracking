@@ -10,6 +10,8 @@ from bokeh.layouts import gridplot
 from bokeh.io import export_png
 from scipy.io import wavfile
 from scipy.interpolate import interp1d
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import pdb
 import time
