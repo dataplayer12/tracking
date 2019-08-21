@@ -5,7 +5,7 @@ Particle tracking software
 ## Setup
 
 ```Shell
-conda create -n tracking python=3.7
+conda create -n tracking python=3.7.1
 conda activate tracking
 git clone http://www.github.com/dataplayer12/tracking.git
 cd tracking
