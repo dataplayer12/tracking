@@ -5,17 +5,21 @@ Particle tracking software
 ## Setup
 
 ```Shell
-conda create -n tracking python=3.7.1
-conda activate tracking
 git clone http://www.github.com/dataplayer12/tracking.git
 cd tracking
-pip install -r requirements.txt
-conda install -c menpo opencv
+conda create --name tracking --file environment.txt
+conda activate tracking
 cd cython_hw/
 python setup.py build_ext --inplace
 cd ../
 python tutils.py
+python guitest.py
 ```
+After the last command, a new window should open. It should look like this:
+![guitest](https://github.com/dataplayer12/tracking/blob/master/guitest.png)
+
+If you can successfully see the text 'Hello World' in the window, the installation was successful. Now, use the `frontend` script as described below.
+
 ## Usage
 
 Within the tracking environment, as setup before, use the `frontend` script as
