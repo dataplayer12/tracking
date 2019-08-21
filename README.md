@@ -7,7 +7,7 @@ Particle tracking software
 ```Shell
 conda create -n tracking python=3.7
 conda activate tracking
-git clone http://www/github.com/dataplayer12/tracking.git
+git clone http://www.github.com/dataplayer12/tracking.git
 cd tracking
 pip install -r requirements.txt
 conda install -c menpo opencv
