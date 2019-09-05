@@ -1,5 +1,5 @@
 import tkinter as tk
-import easygui
+#import easygui
 import pandas as pd
 from time import strftime
 from time import sleep
@@ -14,7 +14,7 @@ def app(database):
     window = tk.Tk()  # you may also see it named as "root" in other sources
 
     window.title("Tracking Software")
-    window.geometry("650x600")
+    window.geometry("750x650")
     window.resizable(width="true", height="true")
 
     # three frames on top of each other
@@ -262,19 +262,19 @@ def app(database):
 
     # a proper app needs some buttons too!
     button_trim = tk.Button(bottom_frame, text="Trim & Crop", command=trim_crop_video_fn,
-                            bg='dark red', fg='black', relief='raised', width=20, height=2, font=('Helvetica 12'))
+                            bg='dark blue', fg='white', relief='raised', width=20, height=2, font=('Helvetica 12'))
     button_trim.grid(column=0, row=0, sticky='e', padx=100, pady=2)
 
     button_refresh = tk.Button(bottom_frame, text="Refresh", command=refresh_app,
-                               bg='dark red', fg='black', relief='raised', width=20, height=2, font=('Helvetica 12'))
+                               bg='dark green', fg='white', relief='raised', width=20, height=2, font=('Helvetica 12'))
     button_refresh.grid(column=1, row=0, sticky='e', padx=100, pady=2)
 
     button_run = tk.Button(bottom_frame, text="Track video", command=run_app, bg='dark green',
-                           fg='black', relief='raised', width=20, height=2, font=('Helvetica 12 bold'))
+                           fg='white', relief='raised', width=20, height=2, font=('Helvetica 12 bold'))
     button_run.grid(column=0, row=1, sticky='w', padx=100, pady=2)
 
     button_close = tk.Button(bottom_frame, text="Exit", command=close_app,
-                             bg='dark red', fg='black', relief='raised', width=20, height=2, font=('Helvetica 12'))
+                             bg='dark red', fg='white', relief='raised', width=20, height=2, font=('Helvetica 12'))
     button_close.grid(column=1, row=1, sticky='e', padx=100, pady=2)
 
     window.mainloop()
