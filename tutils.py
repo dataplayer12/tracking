@@ -2,8 +2,7 @@ import numpy as np
 import os
 import sys
 import cv2
-sys.path.append('cython_hw/')
-import lfit_cython
+from cython_modules import lfit_cython
 import csv
 from bokeh.plotting import figure, output_file, show
 from bokeh.layouts import gridplot
@@ -13,13 +12,12 @@ from scipy.interpolate import interp1d
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-import pdb
 import time
+from collections import Counter
 
 FPS = 24
 F_0 = 0.5
-AUDIO_RATE = 44100  # int(stretch_factor*(FPS/2.0))
-
+AUDIO_RATE = 44100
 
 class MovingObj:
 
@@ -160,7 +158,7 @@ class MovingObj:
 
 class Waitbar(object):
 
-    def __init__(self, winname, size=[500, 100], color=[0, 0, 255]):
+    def __init__(self, winname, size=[500, 100], color=[0, 0, 255],txtsize=0.5):
         self.winname = winname
         self.color = np.array(color)
         self.window = cv2.namedWindow(winname, cv2.WINDOW_NORMAL)
@@ -169,6 +167,7 @@ class Waitbar(object):
         self.blank = 255 * np.ones((size[1], size[0], 3), dtype=np.uint8)
         self.pixel_level = 0
         self.start_time = time.time()
+        self.txtsize=txtsize
 
     def update(self, level):
         remaining = self.estimate_time_remaining(level)
@@ -184,7 +183,7 @@ class Waitbar(object):
         msg = 'Time remaining: {} min, {} seconds'.format(
             int(remaining // 60), sec)
         cv2.putText(image, msg, (0, int(0.9 * self.winsize[1])),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+                    cv2.FONT_HERSHEY_SIMPLEX, self.txtsize, (0, 0, 0))
         return image
 
     def estimate_time_remaining(self, level):
@@ -314,7 +313,7 @@ def drawtrajectory(previous, tracked_objs, this_frame, bead_indices, color='gree
     return previous, this_frame
 
 
-def writedistances(frame, tracked_objs, etime):
+def writedistances(frame, tracked_objs):
     finddist = lambda tp1, tp2: np.sqrt(
         (tp1[0] - tp2[0])**2 + (tp1[1] - tp2[1])**2)
     copied = frame[:]
@@ -322,16 +321,6 @@ def writedistances(frame, tracked_objs, etime):
         if True:  # obj.num_frames_detected > 5:
             center = lambda: tuple(
                 (np.array(obj.previous_centers[0]) + np.array(obj.previous_centers[-1])) // 2)
-            #dist=[finddist(obj.previous_centers[idx-1],obj.previous_centers[idx]) for idx in range(1,obj.num_frames_detected)]
-            # dist=np.sum(dist)
-            #text_s='S={:.1f} um'.format(dist*0.64)
-            # disp=finddist(obj.previous_centers[0],obj.previous_centers[-1])
-            ##text_d='D={:.1f} um'.format(disp*0.64)
-            ##text_v='v={:.1f} um/s'.format(disp*0.64/etime)
-            #cv2.putText(frame,text_s, obj.lastcenter(),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255))
-            # frame=cv2.line(frame,obj.previous_centers[0],obj.previous_centers[-1],(255,0,255),1)
-            ##cv2.putText(frame,text_d, center() ,cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255))
-            ##cv2.putText(frame,text_v, (center()[0],center()[1]+25) ,cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255))
             textid = str(idx)
             cv2.putText(copied, textid, obj.lastcenter(),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255))
@@ -529,7 +518,6 @@ def get_last_frame(fname):
     number_of_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
     # print(number_of_frames)
     video.set(cv2.CAP_PROP_POS_FRAMES, number_of_frames - 2)
-    # pdb.set_trace()
     ret, frame = video.read()
     last_frame = frame[:]
     video.release()
@@ -977,7 +965,51 @@ def crop_and_trim(fname, prev_points=None):
     return newname, points_list
 
 
-def track_video(fname, template_file, threshold, log_stopped=True, vidn=None, guivar=None):
+def filename_chunks(full_list):
+    '''function which splits file names into many chunks'''
+
+    chunks=[]
+    video_names=[f[:f[:f.rfind('/')].rfind('/')+1] for f in full_list]
+    #[f.split('/') for f in full_list]
+    counts=Counter[video_names]
+    for k,v in counts:
+        c=[]
+        for idx in range(v):
+            vidname=[f for f in os.listdir(k+'{}m/'.format(idx)) if f.endswith('.mov') and 'analyzed_' not in f][0]
+            c.append(k+'{}m/'.format(idx)+vidname)
+        chunks.append(c)
+    return chunks
+
+def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240):
+    oldres=None
+    failed=[]
+    succeeded=[]
+    for fname in files_to_analyze:
+        txtfile=fname[:fname.rfind('.')]+'_data.txt'
+        tracked_objs=[]
+        tracked_objs=load_beads(txtfile)
+        debug=True
+        try:
+            highlighted_sa,num_stopped_sa,num_in_sa,oldres=find_beads_in_sensing_area(fname,tracked_objs,total_frames, bead_radius,strict=True,debug=debug,oldres=oldres)
+            cv2.imwrite(fname[:fname.rfind('.')+1]+'_{}_stopped_beads_sa.jpg'.format(num_stopped_sa),highlighted_sa)
+            stoppedtxt_sa=txtfile[:txtfile.rfind('.')]+'_stopped_sa.txt'
+            print('Total beads in sensing area= {}'.format(num_in_sa))
+            with open(stoppedtxt_sa,'w') as f:
+                msg='Number of beads in sensing area={}\n Number of beads stopped={}\n Percentage of beads stopped= {:.3f}\n'.\
+                format(num_in_sa,num_stopped_sa,num_stopped_sa*100.0/num_in_sa)
+                f.write(msg)
+            succeeded.append(fname)
+        except Exception as e:
+            print('Error while analyzing file: {}'.format(fname))
+            print(str(e))
+            failed.append(fname)
+
+        if len(succeeded)>0 and len(failed)>0:
+            files_to_analyze.extend(failed) #modifying something while iterating over it. for shame!
+            failed=[]
+
+
+def track_video(fname, template_file, threshold):
     video = cv2.VideoCapture(fname)
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
     filename = fname[:fname.rfind('/') + 1] + \
@@ -1012,28 +1044,26 @@ def track_video(fname, template_file, threshold, log_stopped=True, vidn=None, gu
         np.sum((np.array(obj.previous_centers[-1]) - np.array(cen))**2))
     ret, frame = video.read()
     count = 0
-    # cv2.imwrite('frame.jpg',frame)
 
     while (ret):
         count += ret
         last_frame = frame[:]
         current_centers = []
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        # gray=cv2.GaussianBlur(gray,(5,5),3,3)
         res = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
         loc = [np.where(res >= threshold)[0], np.where(
             res >= threshold)[1], res[np.where(res >= threshold)]]
         loc = nms(loc)
-        if guivar:
-            img = bar.update(float(count) / total_frames)
-            cv2.imshow(bar.winname, img)
-            k = cv2.waitKey(1)
-            # guivar.set("Video {} of {}, Progress: {:.3f} %".format(
-            #    vidn[0], vidn[1], float(100 * count) / total_frames))
-        else:
-            sys.stdout.write(
-                "\r" + "Progress: {:.3f} %".format(float(100 * count) / total_frames))
-            sys.stdout.flush()
+
+        img = bar.update(float(count) / total_frames)
+        cv2.imshow(bar.winname, img)
+        k = cv2.waitKey(1)
+        # guivar.set("Video {} of {}, Progress: {:.3f} %".format(
+        #    vidn[0], vidn[1], float(100 * count) / total_frames))
+        # else:
+        #     sys.stdout.write(
+        #         "\r" + "Progress: {:.3f} %".format(float(100 * count) / total_frames))
+        #     sys.stdout.flush()
         for pt in zip(*loc[::-1]):
             center = (pt[0] + bead_radius // 2, pt[1] + bead_radius // 2)
             frame = cv2.circle(frame, center, bead_radius, (0, 255, 0), 1)
@@ -1045,7 +1075,6 @@ def track_video(fname, template_file, threshold, log_stopped=True, vidn=None, gu
                     tracked_objs.append(MovingObj(center))
                     tracked_objs[-1].tracked_frame_indices.append(count)
             else:
-                # frame=cv2.circle(frame,center,radius,(0,255,255),2)
                 current_centers.append(center)
 
         if count > num_frames_in_history:
@@ -1062,12 +1091,11 @@ def track_video(fname, template_file, threshold, log_stopped=True, vidn=None, gu
         videoWriter.write(frame)
         ret, frame = video.read()
 
-    etime = -10  # not used
-
-    frame = writedistances(last_frame, tracked_objs, etime)
+    frame = writedistances(last_frame, tracked_objs)
     videoWriter.write(frame)
     videoWriter.release()
     video.release()
+    
     stoppedtxt = txtfile[:txtfile.rfind('.')] + '_stopped.txt'
     stoppedtxt_easy = txtfile[:txtfile.rfind('.')] + '_stopped_easy.txt'
     save_beads(txtfile, tracked_objs)
@@ -1104,3 +1132,5 @@ def track_video(fname, template_file, threshold, log_stopped=True, vidn=None, gu
     with open(fname[:fname.rfind('/') + 1] + 'num_tracked.txt', 'w') as f:
         f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'
                 .format(len(tracked_objs), num_stopped, num_stopped * 100.0 / float(len(tracked_objs))))
+
+    cv2.destroyWindow(bar.winname)
