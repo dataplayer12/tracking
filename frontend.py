@@ -9,7 +9,7 @@ def app():
     window = tk.Tk()  # you may also see it named as "root" in other sources
 
     window.title("Tracking Software")
-    window.geometry("750x650")
+    window.geometry("750x700")
     window.resizable(width="true", height="true")
 
     # three frames on top of each other
@@ -207,6 +207,7 @@ def app():
                     folder, False, filemode, guivar=[variables['status'], window])
 
                 trimmed_videos.extend(outfiles)
+
             else:
                 files = [folder] if filemode else [
                     folder + f for f in os.listdir(folder) if f.endswith(extension)]
@@ -231,9 +232,9 @@ def app():
             if isyes('folderjob'):
                 folder = folder[:folder.rfind('/') + 1]
                 try_create(folder + 'tracking/')
-                trim_helper(folder, isyes('em'), False)
+                trim_helper(folder, isyes('em'), False,variables)
             else:
-                trim_helper(folder, isyes('em'), True)
+                trim_helper(folder, isyes('em'), True,variables)
 
             if isyes('crop'):
                 prev_points = []
@@ -244,6 +245,8 @@ def app():
                         'Cropped video {} of {}'.format(idx + 1, len(trimmed_videos)))
             else:
                 variables['affa'] = trimmed_videos[:]
+
+            variables['status'].set('Trimming and cropping finished')
 
         elif isyes('crop'):
             # no trim, only crop

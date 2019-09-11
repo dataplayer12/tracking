@@ -967,20 +967,19 @@ def crop_and_trim(fname, prev_points=None):
 
 def filename_chunks(full_list):
     '''function which splits file names into many chunks'''
-
     chunks=[]
     video_names=[f[:f[:f.rfind('/')].rfind('/')+1] for f in full_list]
     #[f.split('/') for f in full_list]
-    counts=Counter[video_names]
-    for k,v in counts:
+    counts=Counter(video_names)
+    for k,v in counts.items():
         c=[]
-        for idx in range(v):
+        for idx in range(1,v+1):
             vidname=[f for f in os.listdir(k+'{}m/'.format(idx)) if f.endswith('.mov') and 'analyzed_' not in f][0]
             c.append(k+'{}m/'.format(idx)+vidname)
         chunks.append(c)
     return chunks
 
-def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240):
+def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240,debug=False):
     oldres=None
     failed=[]
     succeeded=[]
@@ -988,7 +987,6 @@ def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240):
         txtfile=fname[:fname.rfind('.')]+'_data.txt'
         tracked_objs=[]
         tracked_objs=load_beads(txtfile)
-        debug=True
         try:
             highlighted_sa,num_stopped_sa,num_in_sa,oldres=find_beads_in_sensing_area(fname,tracked_objs,total_frames, bead_radius,strict=True,debug=debug,oldres=oldres)
             cv2.imwrite(fname[:fname.rfind('.')+1]+'_{}_stopped_beads_sa.jpg'.format(num_stopped_sa),highlighted_sa)
