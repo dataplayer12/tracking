@@ -201,7 +201,7 @@ def app():
         folder = variables['folder'].get()
         extension = folder[folder.rfind('.'):]
 
-        def trim_helper(folder, em, filemode):
+        def trim_helper(folder, em, filemode,variables):
             if em:
                 outfiles = tutils.extract_videos_for_processing(
                     folder, False, filemode, guivar=[variables['status'], window])
@@ -300,7 +300,7 @@ def app():
             if len(variables['affa'])==1:
                 variables['status'].set('Analyzing video for stopped beads')
                 src=tutils.cv2.VideoCapture(variables['affa'])
-                total_frames=src.get(tutils.cv2.CAP_PROP_NUM_FRAMES)
+                total_frames=src.get(tutils.cv2.CAP_PROP_FRAME_COUNT)
                 assert total_frames>0,'source file cannot be read'
                 src.release()
                 tutils.analyze_sensing_area(c,bead_radius,total_frames)
