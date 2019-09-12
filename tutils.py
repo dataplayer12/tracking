@@ -983,10 +983,13 @@ def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240,debug=F
     oldres=None
     failed=[]
     succeeded=[]
+    maxtries=2*len(files_to_analyze)
+    ntries=0
     for fname in files_to_analyze:
         txtfile=fname[:fname.rfind('.')]+'_data.txt'
         tracked_objs=[]
         tracked_objs=load_beads(txtfile)
+        ntries+=1
         try:
             highlighted_sa,num_stopped_sa,num_in_sa,oldres=find_beads_in_sensing_area(fname,tracked_objs,total_frames, bead_radius,strict=True,debug=debug,oldres=oldres)
             cv2.imwrite(fname[:fname.rfind('.')+1]+'_{}_stopped_beads_sa.jpg'.format(num_stopped_sa),highlighted_sa)
@@ -1005,9 +1008,12 @@ def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240,debug=F
         if len(succeeded)>0 and len(failed)>0:
             files_to_analyze.extend(failed) #modifying something while iterating over it. for shame!
             failed=[]
-
+        if ntries>=maxtries:
+            print("Reached maximum number of tries. Quitting")
+            return
 
 def track_video(fname, template_file, threshold):
+    tic=time.time()
     video = cv2.VideoCapture(fname)
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
     filename = fname[:fname.rfind('/') + 1] + \
@@ -1132,3 +1138,5 @@ def track_video(fname, template_file, threshold):
                 .format(len(tracked_objs), num_stopped, num_stopped * 100.0 / float(len(tracked_objs))))
 
     cv2.destroyWindow(bar.winname)
+    toc=time.time()
+    print("Time required for tracking= {:.2f}".format(toc-tic))

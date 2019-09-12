@@ -174,10 +174,11 @@ def app():
             variables['parallel'].set('No')
             variables['gpu'].set('No')
 
-    set_defaults()
     footer.configure(textvariable=variables['status'])
     variables['template'].trace('w', store_template)
     variables['mode'].trace("w", change_mode)
+    set_defaults()
+    change_mode()
     #to_city_entry.bind("<KeyRelease>", caps_to)
 
     # pack UI elements
@@ -299,7 +300,7 @@ def app():
 
             if len(variables['affa'])==1:
                 variables['status'].set('Analyzing video for stopped beads')
-                src=tutils.cv2.VideoCapture(variables['affa'])
+                src=tutils.cv2.VideoCapture(variables['affa'][0])
                 total_frames=src.get(tutils.cv2.CAP_PROP_FRAME_COUNT)
                 assert total_frames>0,'source file cannot be read'
                 src.release()
@@ -310,7 +311,7 @@ def app():
                     for ix,c in enumerate(chunks):
                         variables['status'].set('Analyzing video {}/{} for stopped beads'.format(ix+1,len(chunks)))
                         src=tutils.cv2.VideoCapture(c[0])
-                        total_frames=src.get(tutils.cv2.CAP_PROP_NUM_FRAMES)
+                        total_frames=src.get(tutils.cv2.CAP_PROP_FRAME_COUNT)
                         assert total_frames>0,'source file cannot be read'
                         src.release()
                         tutils.analyze_sensing_area(c,bead_radius,total_frames)
