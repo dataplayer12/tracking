@@ -1,4 +1,4 @@
-# tracking
+# Track Master 6000
 A cross-platform particle tracking software
 
 ![logo](https://github.com/dataplayer12/tracking/blob/master/images/tracklogo.png)
