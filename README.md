@@ -40,3 +40,5 @@ During tracking the software displays a progress bar:
 ![waitbar](https://github.com/dataplayer12/tracking/blob/master/images/waitbar.png)
 
 Version 0.2 of TM6000 introduces modes for easier setting of two kinds of experiments. This release also introduces multi-processing for tracking several videos in parallel on a multi-core computer. For example, here we show tracking of 15 videos simultaneously on a Ryzen 3700x system running Ubuntu 18.04.
+
+![multi-processing](https://github.com/dataplayer12/tracking/blob/master/images/multi-processing.png)
