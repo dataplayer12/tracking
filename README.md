@@ -1,5 +1,6 @@
 # tracking
 Particle tracking software
+![logo](https://github.com/dataplayer12/tracking/blob/master/tracklogo.png)
 
 ## Supported platforms
 ![macos](https://github.com/gilbarbara/logos/blob/master/logos/macosx.svg)
