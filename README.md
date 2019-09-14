@@ -3,6 +3,10 @@ Particle tracking software
 ![logo](https://github.com/dataplayer12/tracking/blob/master/images/tracklogo.png)
 
 ## Supported platforms
+- macOS
+- Ubuntu
+- Windows
+
 ![macos](https://github.com/gilbarbara/logos/blob/master/logos/macosx.svg)
 ![Linux](https://github.com/gilbarbara/logos/blob/master/logos/linux-tux.svg)
 ![windows](https://github.com/gilbarbara/logos/blob/master/logos/microsoft-windows.svg)
