@@ -1,6 +1,6 @@
 # tracking
 Particle tracking software
-![logo](https://github.com/dataplayer12/tracking/blob/master/tracklogo.png)
+![logo](https://github.com/dataplayer12/tracking/blob/master/images/tracklogo.png)
 
 ## Supported platforms
 ![macos](https://github.com/gilbarbara/logos/blob/master/logos/macosx.svg)
@@ -14,7 +14,7 @@ git clone http://www.github.com/dataplayer12/tracking.git
 cd tracking
 conda create --name tracking --file environment.txt
 conda activate tracking
-cd cython_hw/
+cd cython_modules/
 python setup.py build_ext --inplace
 cd ../
 python tutils.py
@@ -34,7 +34,9 @@ python frontend.py
 This will bring up a graphical user interface as below:
 ![gui](https://github.com/dataplayer12/tracking/blob/master/images/gui.png)
 
-The GUI is easy to use and is still under some development. Basic tracking functionality with a single process and thread is available int he current version.
+The GUI is easy to use and is still under some development.
 
 During tracking the software displays a progress bar:
 ![waitbar](https://github.com/dataplayer12/tracking/blob/master/images/waitbar.png)
+
+Version 0.2 of TM6000 introduces modes for easier setting of two kinds of experiments. This release also introduces multi-processing for tracking several videos in parallel on a multi-core computer. For example, here we show tracking of 15 videos simultaneously on a Ryzen 3700x system running Ubuntu 18.04.
