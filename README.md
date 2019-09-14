@@ -1,6 +1,10 @@
 # tracking
 Particle tracking software
 
+## Supported platforms
+![macos](https://github.com/gilbarbara/logos/blob/master/logos/macosx.svg)
+![Linux](https://github.com/gilbarbara/logos/blob/master/logos/linux-tux.svg)
+![windows](https://github.com/gilbarbara/logos/blob/master/logos/microsoft-windows.svg)
 
 ## Setup
 
