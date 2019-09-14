@@ -1,5 +1,6 @@
 # tracking
-Particle tracking software
+A cross-platform particle tracking software
+
 ![logo](https://github.com/dataplayer12/tracking/blob/master/images/tracklogo.png)
 
 ## Supported platforms
