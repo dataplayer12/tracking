@@ -21,7 +21,7 @@ python tutils.py
 python guitest.py
 ```
 After the last command, a new window should open. It should look like this:
-![guitest](https://github.com/dataplayer12/tracking/blob/master/guitest.png)
+![guitest](https://github.com/dataplayer12/tracking/blob/master/images/guitest.png)
 
 If you can successfully see the text 'Hello World' in the window, the installation was successful. Now, use the `frontend` script as described below.
 
@@ -32,9 +32,9 @@ Within the tracking environment, as setup before, use the `frontend` script as
 python frontend.py
 ```
 This will bring up a graphical user interface as below:
-![gui](https://github.com/dataplayer12/tracking/blob/master/gui.png)
+![gui](https://github.com/dataplayer12/tracking/blob/master/images/gui.png)
 
 The GUI is easy to use and is still under some development. Basic tracking functionality with a single process and thread is available int he current version.
 
 During tracking the software displays a progress bar:
-![waitbar](https://github.com/dataplayer12/tracking/blob/master/waitbar.png)
+![waitbar](https://github.com/dataplayer12/tracking/blob/master/images/waitbar.png)
