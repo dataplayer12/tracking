@@ -321,8 +321,6 @@ def app():
                         src.release()
                         tutils.analyze_sensing_area(c,bead_radius,total_frames)
 
-
-
         variables['status'].set('Finished tracking')
 
     def refresh_app():
