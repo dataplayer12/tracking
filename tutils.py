@@ -178,12 +178,12 @@ class Waitbar(object):
               :self.pixel_level, :] = self.color
         msg = '{:.2f} % Done'.format(level * 100)
         cv2.putText(image, msg, (0, int(0.2 * self.winsize[1])),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+                    cv2.FONT_HERSHEY_COMPLEX, self.txtsize, (0, 0, 0))
         sec = int(remaining - 60 * (remaining // 60))
         msg = 'Time remaining: {} min, {} seconds'.format(
             int(remaining // 60), sec)
         cv2.putText(image, msg, (0, int(0.9 * self.winsize[1])),
-                    cv2.FONT_HERSHEY_SIMPLEX, self.txtsize, (0, 0, 0))
+                    cv2.FONT_HERSHEY_COMPLEX, self.txtsize, (0, 0, 0))
         return image
 
     def estimate_time_remaining(self, level):
@@ -525,10 +525,12 @@ def get_last_frame(fname):
 
 
 def trim_video(source, outfile, start, end):
-    source.set(cv2.CAP_PROP_POS_FRAMES, 0)  # start at the beginning
+    #source.set(cv2.CAP_PROP_POS_FRAMES, 0)  # start at the beginning
     fps = source.get(cv2.CAP_PROP_FPS)
+
     size = (int(source.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(source.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    print(fps, size)
     if os.path.exists(outfile):
         os.remove(outfile)
     sink = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(
@@ -544,7 +546,7 @@ def trim_video(source, outfile, start, end):
             print('Reached end of file')
             break
         count += 1
-
+    print("Finished trimming {}".format(outfile))
     sink.release()
 
 
@@ -629,11 +631,13 @@ def find_boundaries(imgname, debug=False):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.blur(gray, (5, 5))
     _max = gray.max()
-    th, gray = cv2.threshold(gray, 0.8 * _max, _max, cv2.THRESH_BINARY)
+    th, gray = cv2.threshold(gray, 0.9 * _max, _max, cv2.THRESH_BINARY)
     gray_binary = (gray > 0)
     x, y = np.where(gray > 1)
     y_center, x_center = int(y.mean()), int(x.mean())
     edges = cv2.Canny(gray, 100, 200)
+    cv2.imwrite(imgname[:imgname.rfind('/') + 1] + 'check1.jpg', gray)
+
     line_length = 1200
     theta_amp = 24 * np.pi / 180
     theta_list = []
@@ -656,7 +660,6 @@ def find_boundaries(imgname, debug=False):
     tilt_angle = theta_list[np.argmin(rho_list)]
     print(('Pattern is titled by {:.2f} degree'.format(
         tilt_angle * 180 / np.pi)))
-    cv2.imwrite(imgname[:imgname.rfind('/') + 1] + 'check1.jpg', gray)
 
     min_dist_py = np.nanmin(np.array(rho_list, dtype=np.int32))
     # print(min_dist_py)
@@ -1020,7 +1023,7 @@ def track_video(fname, template_file, threshold):
         'analyzed_' + fname[fname.rfind('/') + 1:]
     num_frames_in_history = 5
     total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
-    bar = Waitbar(filename[filename.rfind('/') + 1:])
+    bar = Waitbar(filename[filename.rfind('/') + 1:],size=[700, 200], color=[0, 0, 255],txtsize=1.0)
 
     if os.path.exists(filename):
         os.remove(filename)

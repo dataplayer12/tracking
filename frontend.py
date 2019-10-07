@@ -167,7 +167,7 @@ def app():
             variables['trim'].set('No')
             variables['trims'].set(50)
             variables['trime'].set(60)
-            variables['crop'].set('Yes')
+            variables['crop'].set('No')
             variables['em'].set('No')
             variables['sb'].set('No')
             variables['threshold'].set(0.6)
@@ -205,29 +205,33 @@ def app():
         def trim_helper(folder, em, filemode,variables):
             if em:
                 outfiles = tutils.extract_videos_for_processing(
-                    folder, False, filemode, guivar=[variables['status'], window])
+                    folder, True, filemode, guivar=[variables['status'], window])
 
                 trimmed_videos.extend(outfiles)
 
             else:
                 files = [folder] if filemode else [
                     folder + f for f in os.listdir(folder) if f.endswith(extension)]
-
+                print(files)
                 for idx, f in enumerate(files):
                     srcfile = f[f.rfind('/') + 1:]
-                    analysis_subfolder = folder + \
-                        'tracking/video{}/'.format(str(idx + 1))
+                    parent_dir=f[:f.rfind('/') + 1]
+                    analysis_subfolder = parent_dir + \
+                        'tracking/{}/'.format(srcfile[:srcfile.rfind(".")])
                     try_create(analysis_subfolder)
-                    outfile = srcfile[:srcfile.rfind(
+                    outfile = analysis_subfolder+srcfile[:srcfile.rfind(
                         '.')] + '_trim' + extension
-                    tutils.trim_video(f, outfile, variables[
+                    source=tutils.cv2.VideoCapture(f)
+                    tutils.trim_video(source, outfile, variables[
                                       'trims'].get(), variables['trime'].get())
                     trimmed_videos.append(outfile)
-
-                    newfile = tutils.crop_and_trim(f)
-                    trimmed_videos.append(newfile)
+                    tutils.extract_template_frames(outfile, name='temp1.jpg')
+                    if isyes("crop"):
+                        newfile = tutils.crop_and_trim(f)
+                        trimmed_videos.append(newfile)
                     variables['status'].set(
                         'Trimmed video {} of {}'.format(idx + 1, len(files)))
+                    source.release()
 
         if isyes('trim'):
             if isyes('folderjob'):
@@ -235,6 +239,7 @@ def app():
                 try_create(folder + 'tracking/')
                 trim_helper(folder, isyes('em'), False,variables)
             else:
+                try_create(folder[:folder.rfind('/') + 1] + 'tracking/')
                 trim_helper(folder, isyes('em'), True,variables)
 
             if isyes('crop'):
