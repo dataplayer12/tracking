@@ -8,10 +8,10 @@ A cross-platform particle tracking software
 - Ubuntu
 - Windows
 
-![macos](https://github.com/gilbarbara/logos/blob/master/logos/macosx.svg)
-![Linux](https://github.com/gilbarbara/logos/blob/master/logos/linux-tux.svg)
-![windows](https://github.com/gilbarbara/logos/blob/master/logos/microsoft-windows.svg)
 
+![Linux](https://github.com/gilbarbara/logos/blob/master/logos/linux-tux.svg)
+<img src="https://github.com/gilbarbara/logos/blob/master/logos/macOS.svg" width="300" height="300" />
+![windows](https://github.com/gilbarbara/logos/blob/master/logos/microsoft-windows.svg)
 ## Setup
 
 ```Shell
