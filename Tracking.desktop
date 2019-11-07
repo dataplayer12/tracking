@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Tracking
+Comment=Perform tracking of beads
+Exec=/home/sandhulab/tracking/track.sh
+Icon=/home/sandhulab/tracking/images/trackicon.icns
+Terminal=true
+Type=Application
