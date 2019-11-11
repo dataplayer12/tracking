@@ -14,10 +14,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import time
 from collections import Counter
-
-FPS = 24
-F_0 = 0.5
-AUDIO_RATE = 44100
+from config import FPS, F_0, AUDIO_RATE, FOURCC
 
 class MovingObj:
 
@@ -323,7 +320,7 @@ def writedistances(frame, tracked_objs):
                 (np.array(obj.previous_centers[0]) + np.array(obj.previous_centers[-1])) // 2)
             textid = str(idx)
             cv2.putText(copied, textid, obj.lastcenter(),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255))
+                        cv2.FONT_HERSHEY_COMPLEX, 0.7, (255, 255, 255))
     return copied
 
 
@@ -534,7 +531,7 @@ def trim_video(source, outfile, start, end):
     if os.path.exists(outfile):
         os.remove(outfile)
     sink = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(
-        *'mp4v'), fps, size)
+        FOURCC), fps, size)
     source.set(cv2.CAP_PROP_POS_FRAMES, int(start * fps))
     n_frames_needed = int((end - start) * fps)
     ret, frame = source.read()
@@ -952,7 +949,7 @@ def crop_and_trim(fname, prev_points=None):
         os.remove(newname)
 
     sink = cv2.VideoWriter(newname, cv2.VideoWriter_fourcc(
-        *'mp4v'), fps, size)
+        FOURCC), fps, size)
     ret, frame = src.read()
 
     while ret:
@@ -1015,7 +1012,7 @@ def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240,debug=F
             print("Reached maximum number of tries. Quitting")
             return
 
-def track_video(fname, template_file, threshold):
+def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
     tic=time.time()
     video = cv2.VideoCapture(fname)
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
@@ -1023,7 +1020,8 @@ def track_video(fname, template_file, threshold):
         'analyzed_' + fname[fname.rfind('/') + 1:]
     num_frames_in_history = 5
     total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
-    bar = Waitbar(filename[filename.rfind('/') + 1:],size=[700, 200], color=[0, 0, 255],txtsize=1.0)
+    if guiflag:
+        bar = Waitbar(filename[filename.rfind('/') + 1:],size=[700, 200], color=[0, 0, 255],txtsize=1.0)
 
     if os.path.exists(filename):
         os.remove(filename)
@@ -1035,7 +1033,7 @@ def track_video(fname, template_file, threshold):
     size = (int(video.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     videoWriter = cv2.VideoWriter(
-        filename, cv2.VideoWriter_fourcc(*'mp4v'), fps, size)
+        filename, cv2.VideoWriter_fourcc(FOURCC), fps, size)
 
     tracked_objs = []
     osc_color = 'red'
@@ -1061,16 +1059,11 @@ def track_video(fname, template_file, threshold):
         loc = [np.where(res >= threshold)[0], np.where(
             res >= threshold)[1], res[np.where(res >= threshold)]]
         loc = nms(loc)
-
-        img = bar.update(float(count) / total_frames)
-        cv2.imshow(bar.winname, img)
-        k = cv2.waitKey(1)
-        # guivar.set("Video {} of {}, Progress: {:.3f} %".format(
-        #    vidn[0], vidn[1], float(100 * count) / total_frames))
-        # else:
-        #     sys.stdout.write(
-        #         "\r" + "Progress: {:.3f} %".format(float(100 * count) / total_frames))
-        #     sys.stdout.flush()
+        if guiflag:
+            img = bar.update(float(count) / total_frames)
+            cv2.imshow(bar.winname, img)
+            k = cv2.waitKey(1)
+            
         for pt in zip(*loc[::-1]):
             center = (pt[0] + bead_radius // 2, pt[1] + bead_radius // 2)
             frame = cv2.circle(frame, center, bead_radius, (0, 255, 0), 1)
@@ -1139,7 +1132,7 @@ def track_video(fname, template_file, threshold):
     with open(fname[:fname.rfind('/') + 1] + 'num_tracked.txt', 'w') as f:
         f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'
                 .format(len(tracked_objs), num_stopped, num_stopped * 100.0 / float(len(tracked_objs))))
-
-    cv2.destroyWindow(bar.winname)
+    if guiflag:
+        cv2.destroyWindow(bar.winname)
     toc=time.time()
     print("Time required for tracking= {:.2f}".format(toc-tic))
