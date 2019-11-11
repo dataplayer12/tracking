@@ -531,7 +531,7 @@ def trim_video(source, outfile, start, end):
     if os.path.exists(outfile):
         os.remove(outfile)
     sink = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(
-        FOURCC), fps, size)
+        *FOURCC), fps, size)
     source.set(cv2.CAP_PROP_POS_FRAMES, int(start * fps))
     n_frames_needed = int((end - start) * fps)
     ret, frame = source.read()
@@ -949,7 +949,7 @@ def crop_and_trim(fname, prev_points=None):
         os.remove(newname)
 
     sink = cv2.VideoWriter(newname, cv2.VideoWriter_fourcc(
-        FOURCC), fps, size)
+        *FOURCC), fps, size)
     ret, frame = src.read()
 
     while ret:
@@ -1033,7 +1033,7 @@ def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
     size = (int(video.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     videoWriter = cv2.VideoWriter(
-        filename, cv2.VideoWriter_fourcc(FOURCC), fps, size)
+        filename, cv2.VideoWriter_fourcc(*FOURCC), fps, size)
 
     tracked_objs = []
     osc_color = 'red'

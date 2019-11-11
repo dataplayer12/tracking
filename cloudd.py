@@ -57,7 +57,7 @@ class ServiceMonitor(object):
 
     def analyze_biosensing_folder(self,folder):
         trimmed_videos=[]
-        outfiles = tutils.extract_videos_for_processing(folder)
+        outfiles = tutils.extract_videos_for_processing(folder+"/")
         trimmed_videos.extend(outfiles)
         if os.path.exists(os.path.join(folder,'temp1.jpg')):
             temp=os.path.join(folder,'temp1.jpg')
