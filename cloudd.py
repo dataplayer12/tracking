@@ -45,7 +45,7 @@ class ServiceMonitor(object):
                     dirs_to_analyze.append(os.path.join(self.monitor_d,d))
 
             else:
-                if os.path.isdir(os.path.join(self.monitor_d,d,cfg.biosensing_flag)):
+                if os.path.isdir(os.path.join(self.monitor_d,d,cfg.biosensing_flag.lower())):
                     dirs_to_analyze.append(os.path.join(self.monitor_d,d)) #add to list of folders to analyze
                     self.ignored.append(d) #don't check this folder again, as we have already listed it for analysis
                     remove_candidates.append(idx) #remove from candidates
