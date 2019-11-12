@@ -14,20 +14,23 @@ A cross-platform particle tracking software.
 ![windows](https://github.com/gilbarbara/logos/blob/master/logos/microsoft-windows.svg)
 
 # Setup
+On **Windows**:
+- [Download](https://www.anaconda.com/distribution/) and install the Anaconda python package manager.
+- In the `Start` menu, search for `Anaconda Prompt` and open it.
+- Click the `Clone or Download` button above and click `Download zip`.
+- Unzip the folder and open it. You will find a file called `winsetup.bat`
+- From `Anaconda Prompt`, go to the directory where the zip file was extracted and type `winsetup.bat` and press `Enter`.
+- Please wait while the dependencies are being installed.
 
+On **Linux or Mac**, open up the terminal and run the following commands:
 ```Shell
 git clone http://www.github.com/dataplayer12/tracking.git
 cd tracking
 git checkout v0.3
-conda create --name tracking --file environment.txt
-conda activate tracking
-cd cython_modules/
-python setup.py build_ext --inplace
-cd ../
-python tutils.py
-python guitest.py
+sudo chmod +x ./unixsetup.sh #You will have to provide your password to run this command
+sudo ./unixsetup.sh #This command will take a long time to execute.
 ```
-After the last command, a new window should open. It should look like this:
+If everything goes well, you will have the libraries installed on Linux/mac/Windows and a new window will open up. It will look like this:
 ![guitest](https://github.com/dataplayer12/tracking/blob/master/images/guitest.png)
 
 If you can successfully see the text 'Hello World' in the window, the installation was successful. Now, use the `frontend` script as described below.
