@@ -1,8 +1,9 @@
 import os
 import tutils
-import config as cfg #import BASEDIR, biosensing_flag, gui_flag, timeout, delay, stopfile
+import config as cfg
 from multiprocessing import Process, cpu_count
 import time
+import cv2
 
 class ServiceMonitor(object):
     def __init__(self, monitor_d):
@@ -10,17 +11,26 @@ class ServiceMonitor(object):
         self.ignored=self.index_existing_dirs()
         self.candidates=[]
         self.stopfile=cfg.stopfile
+        if cfg.gui_flag:
+            self.image=cv2.imread('./images/cloudlogo.png')
 
         with open(self.stopfile,'w') as f:
             f.write('Delete this file to stop analysis server')
 
     def run(self):
         while os.path.exists(self.stopfile):
+            if cfg.gui_flag:
+                cv2.imshow('BioCloud [Press q to quit]',self.image)
+                k=cv2.waitKey(1)
+                if k==ord('q'):
+                    break
+                    
             self.refresh_candidates()
             dirs_to_analyze=self.analyze_or_ignore()
             for d in dirs_to_analyze:
                 self.analyze_biosensing_folder(d)
-            time.sleep(cfg.delay)
+            if not cfg.gui_flag:
+                time.sleep(cfg.delay)
 
     def index_existing_dirs(self):
         return [f for f in os.listdir(self.monitor_d) if os.path.isdir(self.monitor_d)]
