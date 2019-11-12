@@ -1,9 +1,10 @@
 # Track Master 6000
+
 A cross-platform particle tracking software.
 
-<img src="https://github.com/dataplayer12/tracking/blob/master/images/tracklogo.png" width="128" height="256" />
+<img src="https://github.com/dataplayer12/tracking/blob/master/images/tracklogo.png" width="64" height="128" />
 
-## Supported platforms
+# Supported platforms
 - Ubuntu
 - macOS
 - Windows
@@ -11,7 +12,8 @@ A cross-platform particle tracking software.
 ![Linux](https://github.com/gilbarbara/logos/blob/master/logos/linux-tux.svg)
 <img src="https://github.com/gilbarbara/logos/blob/master/logos/macOS.svg" width="300" height="300" />
 ![windows](https://github.com/gilbarbara/logos/blob/master/logos/microsoft-windows.svg)
-## Setup
+
+# Setup
 
 ```Shell
 git clone http://www.github.com/dataplayer12/tracking.git
@@ -30,7 +32,7 @@ After the last command, a new window should open. It should look like this:
 
 If you can successfully see the text 'Hello World' in the window, the installation was successful. Now, use the `frontend` script as described below.
 
-## Usage
+# Usage
 
 Within the tracking environment, as setup before, use the `frontend` script as
 ```Shell
@@ -44,6 +46,8 @@ The GUI is easy to use and is still under some development.
 During tracking the software displays a progress bar:
 ![waitbar](https://github.com/dataplayer12/tracking/blob/master/images/waitbar.png)
 
+# Releases
+
 ## Release 0.3
 Version 0.3 of TM6k introduces a cloud daemon to which can analyze the files uploaded to a server on the cloud. The server can be started by invoking the server as `python cloudd.py`. While the server is running, this banner is displayed on the screen:
 ![cloudd](https://github.com/dataplayer12/tracking/blob/master/images/cloudlogo.png)
@@ -53,3 +57,6 @@ Press 'q' to stop the server.
 Version 0.2 of TM6000 introduces modes for easier setting of two kinds of experiments. This release also introduces multi-processing for tracking several videos in parallel on a multi-core computer. For example, here we show tracking of 15 videos simultaneously on a Ryzen 3700x system running Ubuntu 18.04.
 
 ![multi-processing](https://github.com/dataplayer12/tracking/blob/master/images/multi-processing.png)
+
+## Release 0.1
+Version 0.1 of TM6000 is the first stable release of this software, introducing a GUI for particle tracking. Only one video can be tracked at a time.
