@@ -41,11 +41,11 @@ class ServiceMonitor(object):
             if (time.time()-first_found) > cfg.timeout:
                 self.ignored.append(d)
                 remove_candidates.append(idx)
-                if os.path.isdir(os.path.join(self.monitor_d,d,cfg.biosensing_flag)): #one last check
+                if cfg.biosensing_flag in [f.lower() for f in os.listdir(os.path.join(self.monitor_d,d)) if os.path.isdir(os.path.join(self.monitor_d,d,f))]: #one last check
                     dirs_to_analyze.append(os.path.join(self.monitor_d,d))
 
             else:
-                if os.path.isdir(os.path.join(self.monitor_d,d,cfg.biosensing_flag.lower())):
+                if cfg.biosensing_flag in [f.lower() for f in os.listdir(os.path.join(self.monitor_d,d)) if os.path.isdir(os.path.join(self.monitor_d,d,f))]:
                     dirs_to_analyze.append(os.path.join(self.monitor_d,d)) #add to list of folders to analyze
                     self.ignored.append(d) #don't check this folder again, as we have already listed it for analysis
                     remove_candidates.append(idx) #remove from candidates
