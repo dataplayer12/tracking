@@ -14,7 +14,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import time
 from collections import Counter
-from config import FPS, F_0, AUDIO_RATE, FOURCC
+from config import * #FPS, F_0, AUDIO_RATE, FOURCC, FIND_OSCILLATING, NUM_FRAMES_IN_HISTORY, MAX_KALMAN_LEARNING_TIME
 
 class MovingObj:
 
@@ -26,6 +26,7 @@ class MovingObj:
         self.num_not_found = 0
         self.is_being_tracked = False
         self.tracked_frame_indices = []
+        self.is_oscillating = False
 
     def prepareKF(self):
         kalman = cv2.KalmanFilter(4, 2)
@@ -48,13 +49,13 @@ class MovingObj:
         return self.previous_centers[-1]
 
     def predictnow(self):
-        if self.num_frames_detected < 40 or not self.is_being_tracked:
-            if self.num_frames_detected > 5:
-                # do something
+        if self.num_frames_detected < MAX_KALMAN_LEARNING_TIME or not self.is_being_tracked:
+            if self.num_frames_detected > NUM_FRAMES_IN_HISTORY:
+                #linear extrapolation
                 pos = 2 * \
                     np.array(self.previous_centers[-1]) - \
                     np.array(self.previous_centers[-2])
-                return list(pos)
+                return list(pos) 
 
             else:
                 return list(self.lastcenter())
@@ -68,12 +69,13 @@ class MovingObj:
         self.num_not_found = 0
         if self.num_frames_detected >= 3:
             self.is_being_tracked = True
-        self.determine_oscillation(
-            fps=FPS, f_0=F_0, min_frames=100)  # CHANGE 1000 TO 100
+        if FIND_OSCILLATING:
+            self.determine_oscillation(
+                fps=FPS, f_0=F_0, min_frames=100)  # CHANGE 1000 TO 100
 
     def drop(self):
         self.num_not_found += 1
-        if self.num_not_found > 30:
+        if self.num_not_found > MAX_KALMAN_LEARNING_TIME:
             self.is_being_tracked = False
 
     def track_points(self):
@@ -1018,7 +1020,7 @@ def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
     filename = fname[:fname.rfind('/') + 1] + \
         'analyzed_' + fname[fname.rfind('/') + 1:]
-    num_frames_in_history = 5
+    num_frames_in_history = NUM_FRAMES_IN_HISTORY
     total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
     if guiflag:
         bar = Waitbar(filename[filename.rfind('/') + 1:],size=[700, 200], color=[0, 0, 255],txtsize=1.0)

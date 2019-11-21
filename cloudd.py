@@ -1,9 +1,11 @@
 import os
 import tutils
 import config as cfg
-from multiprocessing import Process, cpu_count
+from multiprocessing import Process, cpu_count, Value
+from threading import Thread
 import time
 import cv2
+import matplotlib.pyplot as plt
 
 class ServiceMonitor(object):
     def __init__(self, monitor_d):
@@ -11,6 +13,8 @@ class ServiceMonitor(object):
         self.ignored=self.index_existing_dirs()
         self.candidates=[]
         self.stopfile=cfg.stopfile
+        self.stop=0 #Value("i",0)
+        self.dirs_to_analyze=[]
         if cfg.gui_flag:
             self.image=cv2.imread('./images/cloudlogo.png')
 
@@ -20,17 +24,18 @@ class ServiceMonitor(object):
     def run(self):
         while os.path.exists(self.stopfile):
             if cfg.gui_flag:
-                cv2.imshow('BioCloud [Press q to quit]',self.image)
-                k=cv2.waitKey(1)
-                if k==ord('q'):
-                    break
-                    
+                plt.figure(num="Cloud computing service for biosensing")
+                plt.imshow(self.image)
+                plt.axis("off")
+                plt.show(block=False)
+                plt.pause(0.1)
+
             self.refresh_candidates()
-            dirs_to_analyze=self.analyze_or_ignore()
-            for d in dirs_to_analyze:
+            self.dirs_to_analyze=self.analyze_or_ignore()
+            for d in self.dirs_to_analyze:
                 self.analyze_biosensing_folder(d)
-            if not cfg.gui_flag:
-                time.sleep(cfg.delay)
+            
+            time.sleep(cfg.delay)
 
     def index_existing_dirs(self):
         return [f for f in os.listdir(self.monitor_d) if os.path.isdir(self.monitor_d)]
@@ -81,13 +86,21 @@ class ServiceMonitor(object):
         total_n_videos=len(trimmed_videos)
         for run in range(1+total_n_videos//max_procs):
             processes=[]
+            k=cv2.waitKey(1)
+            if k==27:
+                return
             for pidx in range(min(max_procs,total_n_videos-run*max_procs)):
                 vid=trimmed_videos[max_procs*run+pidx]
                 processes.append(Process(target=tutils.track_video,\
                     args=(vid,temp,th,cfg.gui_flag)))
                 processes[-1].start()
+
+            while sum([p.is_alive() for p in processes]):
+                k=cv2.waitKey(1)
+                if k==27:
+                    return
             
-            [p.join() for p in processes]
+            [p.join() for p in processes]#for safety
 
     def store_template(self,path):
         with open('temp/template_path.txt', 'w') as f:
@@ -100,5 +113,7 @@ class ServiceMonitor(object):
 
 if __name__ == '__main__':
     service=ServiceMonitor(cfg.BASEDIR)
-    service.run()
+    p=Process(target=service.run)
+    p.start()
+    p.join()
     print('Stop notice received. Stopping server...')

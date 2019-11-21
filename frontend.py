@@ -48,7 +48,7 @@ def app():
 
     def get_folder(*args):
         filename = tk.filedialog.askopenfilename(
-            title='Please select the video')
+            initialdir=cfg.BASEDIR, title='Please select the video')
         variables['folder'].set(filename)
         entries['folder']['text'] = filename
 
@@ -309,7 +309,7 @@ def app():
                 total_frames=src.get(tutils.cv2.CAP_PROP_FRAME_COUNT)
                 assert total_frames>0,'source file cannot be read'
                 src.release()
-                tutils.analyze_sensing_area(c,bead_radius,total_frames)
+                tutils.analyze_sensing_area([variables['affa'][0]],bead_radius,total_frames)
             else:
                 if isyes('em'):
                     chunks=tutils.filename_chunks(variables['affa'])
