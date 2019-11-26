@@ -15,6 +15,7 @@ class ServiceMonitor(object):
         self.stopfile=cfg.stopfile
         self.stop=0 #Value("i",0)
         self.dirs_to_analyze=[]
+        self.imgshown=False
         if cfg.gui_flag:
             self.image=cv2.imread('./images/cloudlogo.png')
 
@@ -23,12 +24,13 @@ class ServiceMonitor(object):
 
     def run(self):
         while os.path.exists(self.stopfile):
-            if cfg.gui_flag:
+            if cfg.gui_flag and not self.imgshown:
                 plt.figure(num="Cloud computing service for biosensing")
                 plt.imshow(self.image)
                 plt.axis("off")
                 plt.show(block=False)
                 plt.pause(0.1)
+                self.imgshown=True
 
             self.refresh_candidates()
             self.dirs_to_analyze=self.analyze_or_ignore()
