@@ -1,8 +1,9 @@
 import tkinter as tk
-from multiprocessing import Process, cpu_count
+from multiprocessing import Process, cpu_count, set_start_method
 import os
 import config as cfg
 import tutils
+import tkinter.filedialog as filed
 
 
 def app():
@@ -47,13 +48,13 @@ def app():
     footer.grid(row=2, column=0)
 
     def get_folder(*args):
-        filename = tk.filedialog.askopenfilename(
+        filename = filed.askopenfilename(
             initialdir=cfg.BASEDIR, title='Please select the video')
         variables['folder'].set(filename)
         entries['folder']['text'] = filename
 
     def get_template(*args):
-        filename = tk.filedialog.askopenfilename(
+        filename = filed.askopenfilename(
             title='Please select the template')
         variables['template'].set(filename)
         entries['template']['text'] = filename
@@ -346,4 +347,5 @@ def app():
     window.mainloop()
 
 if __name__ == '__main__':
+    set_start_method('spawn')
     app()
