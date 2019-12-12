@@ -888,6 +888,7 @@ def crop_and_trim(fname, prev_points=None):
     ret, frame = src.read()
     winname = fname[fname.rfind('/') + 1:]
     cv2.namedWindow(winname, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(winname, 960, 540)
     nframes = int(src.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = src.get(cv2.CAP_PROP_FPS)
     onTrackbarSlide = lambda n: src.set(cv2.CAP_PROP_POS_FRAMES, n)
@@ -898,13 +899,11 @@ def crop_and_trim(fname, prev_points=None):
 
     get_points = lambda e, x, y, flags, param: points_list.append(
         (x, y)) if e == cv2.EVENT_LBUTTONDOWN else None
-    cv2.setMouseCallback("Video Player", get_points)
-    play = True
+    cv2.setMouseCallback(winname, get_points)
+    play = False
 
     while True:
-        # int(src.get(cv2.CAP_PROP_POS_FRAMES))
-        current_pos = cv2.getTrackbarPos('Position', 'Video Player')
-        cv2.resizeWindow("Video Player", 960, 540)
+        current_pos = cv2.getTrackbarPos('Position', winname)
 
         if current_pos != prev_pos:
             play = not play
@@ -917,10 +916,12 @@ def crop_and_trim(fname, prev_points=None):
             current_pos = int(src.get(cv2.CAP_PROP_POS_FRAMES))
             prev_pos = current_pos
 
-        cv2.imshow("Video Player", frame)
-        cv2.setTrackbarPos("Position", "Video Player", current_pos)
+        newframe=cv2.resize(frame,(960,540))
+        yr,xr=(frame.shape[0]//540,frame.shape[1]//960)
+        cv2.imshow(winname, newframe)
+        cv2.setTrackbarPos("Position", winname, current_pos)
         # print(current_pos)
-        k = cv2.waitKey(1)
+        k = cv2.waitKey(30)
         if k == 27:
             break
         elif k == ord('p'):
@@ -944,7 +945,7 @@ def crop_and_trim(fname, prev_points=None):
 
     newname = fname[:fname.rfind('/') + 1] + \
         'tracking/{}'.format(fname[fname.rfind('/') + 1:])
-    size = (x2 - x1, y2 - y1)
+    size = (int(xr*(x2 - x1)), int(yr*(y2 - y1)))
     print(size)
 
     if os.path.exists(newname):
@@ -955,7 +956,7 @@ def crop_and_trim(fname, prev_points=None):
     ret, frame = src.read()
 
     while ret:
-        subframe = frame[y1:y2, x1:x2, :]
+        subframe = frame[int(yr*y1):int(yr*y2), int(xr*x1):int(xr*x2), :]
         sink.write(subframe)
         ret, frame = src.read()
 
