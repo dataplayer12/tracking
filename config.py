@@ -16,9 +16,11 @@ gui_flag=True #set to Flse if your computer does not have a monitor connected to
 
 timeout=900 #in seconds
 
-NUM_FRAMES_IN_HISTORY=5 #first 5 frames are used to initialize the objects being tracked
+NUM_FRAMES_IN_HISTORY=2 #first 2 frames are used to initialize the objects being tracked
 MAX_KALMAN_LEARNING_TIME=30 #how much time to allow kalman filter to learn motion model
 
+
+cropwindow=(1920,1080)
 delay=5 #time interval at which folders will be checked
 
 stopfile='./service_running.txt' #this file will be created automatically.

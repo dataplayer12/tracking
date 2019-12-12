@@ -70,7 +70,8 @@ def app():
         'f8': tk.Frame(center_frame, borderwidth=2, relief='raised'),
         'f9': tk.Frame(center_frame, borderwidth=2, relief='raised'),
         'f10': tk.Frame(center_frame, borderwidth=2, relief='raised'),
-        'f11': tk.Frame(center_frame, borderwidth=2, relief='raised')
+        'f11': tk.Frame(center_frame, borderwidth=2, relief='raised'),
+        'f12': tk.Frame(center_frame, borderwidth=2, relief='raised')
     }
 
     labels = {
@@ -87,6 +88,7 @@ def app():
         'sb': tk.Label(frames['f9'], text='Analyze stopped beads? '),
         'parallel': tk.Label(frames['f10'], text='Use parallel processing? '),
         'gpu': tk.Label(frames['f11'], text='Use GPU? '),
+        'skip': tk.Label(frames['f12'], text='Subsampling factor: ')
     }
 
     # http://effbot.org/tkinterbook/variable.htm
@@ -104,6 +106,7 @@ def app():
         'sb': tk.StringVar(),
         'parallel': tk.StringVar(),
         'gpu': tk.StringVar(),
+        'skip': tk.DoubleVar(),
         'status': tk.StringVar(),
         'affa': []
     }
@@ -120,6 +123,7 @@ def app():
         variables['em'].set('Yes')
         variables['sb'].set('Yes')
         variables['threshold'].set(0.8)
+        variables['skip'].set(1.0)
         variables['parallel'].set('No')
         variables['gpu'].set('No')
         variables['affa'] = []
@@ -142,6 +146,7 @@ def app():
         'sb': tk.OptionMenu(frames['f9'], variables['sb'], *['Yes', 'No']),
         'parallel': tk.OptionMenu(frames['f10'], variables['parallel'], *['Yes', 'No']),
         'gpu': tk.OptionMenu(frames['f11'], variables['gpu'], *['Yes', 'No']),
+        'skip': tk.Entry(frames['f12'], textvariable=variables['skip'], width=4),
     }
 
     def store_template(*args):
@@ -161,6 +166,7 @@ def app():
             variables['threshold'].set(0.8)
             variables['parallel'].set('Yes')
             variables['gpu'].set('Yes')
+            variables['skip'].set(1.0)
 
         elif variables['mode'].get()=='TEM':
             variables['status'].set('Mode set to TEM')
@@ -174,6 +180,8 @@ def app():
             variables['threshold'].set(0.6)
             variables['parallel'].set('No')
             variables['gpu'].set('No')
+            variables['skip'].set(1.0)
+            
 
     footer.configure(textvariable=variables['status'])
     variables['template'].trace('w', store_template)
@@ -282,6 +290,7 @@ def app():
 
         temp = variables['template'].get()
         th = variables['threshold'].get()
+        skip = int(variables['skip'].get())
 
         if isyes('parallel'):
             max_procs=cpu_count()-1
@@ -291,7 +300,7 @@ def app():
                 for pidx in range(min(max_procs,total_n_videos-run*max_procs)):
                     vid=variables['affa'][max_procs*run+pidx]
                     processes.append(Process(target=tutils.track_video,\
-                        args=(vid,temp,th)))
+                        args=(vid,temp,th,cfg.gui_flag,skip)))
                     processes[-1].start()
                 
                 [p.join() for p in processes]
@@ -299,7 +308,7 @@ def app():
         else:
             for idx, vid in enumerate(variables['affa']):
                 vidn = [idx + 1, len(variables['affa'])]
-                tutils.track_video(vid, temp, th)
+                tutils.track_video(vid, temp, th,cfg.gui_flag,skip)
 
         if isyes('sb'):
             bead_radius=tutils.cv2.imread(temp,1).shape[0]//2

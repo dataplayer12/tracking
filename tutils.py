@@ -888,7 +888,7 @@ def crop_and_trim(fname, prev_points=None):
     ret, frame = src.read()
     winname = fname[fname.rfind('/') + 1:]
     cv2.namedWindow(winname, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(winname, 960, 540)
+    cv2.resizeWindow(winname, cropwindow[0], cropwindow[1])
     nframes = int(src.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = src.get(cv2.CAP_PROP_FPS)
     onTrackbarSlide = lambda n: src.set(cv2.CAP_PROP_POS_FRAMES, n)
@@ -916,8 +916,8 @@ def crop_and_trim(fname, prev_points=None):
             current_pos = int(src.get(cv2.CAP_PROP_POS_FRAMES))
             prev_pos = current_pos
 
-        newframe=cv2.resize(frame,(960,540))
-        yr,xr=(frame.shape[0]//540,frame.shape[1]//960)
+        newframe=cv2.resize(frame,cropwindow)
+        yr,xr=(frame.shape[0]//cropwindow[1],frame.shape[1]//cropwindow[0])
         cv2.imshow(winname, newframe)
         cv2.setTrackbarPos("Position", winname, current_pos)
         # print(current_pos)
@@ -1015,14 +1015,14 @@ def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240,debug=F
             print("Reached maximum number of tries. Quitting")
             return
 
-def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
+def track_video(fname, template_file, threshold,guiflag=True,skip=1):
     tic=time.time()
     video = cv2.VideoCapture(fname)
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
     filename = fname[:fname.rfind('/') + 1] + \
         'analyzed_' + fname[fname.rfind('/') + 1:]
     num_frames_in_history = NUM_FRAMES_IN_HISTORY
-    total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT)/skip)
     if guiflag:
         bar = Waitbar(filename[filename.rfind('/') + 1:],size=[700, 200], color=[0, 0, 255],txtsize=1.0)
 
@@ -1054,7 +1054,7 @@ def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
     count = 0
 
     while (ret):
-        count += ret
+        count += 1
         last_frame = frame[:]
         current_centers = []
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -1063,7 +1063,7 @@ def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
             res >= threshold)[1], res[np.where(res >= threshold)]]
         loc = nms(loc)
         if guiflag:
-            img = bar.update(float(count) / total_frames)
+            img = bar.update(float(count/skip) / total_frames)
             cv2.imshow(bar.winname, img)
             k = cv2.waitKey(1)
             
@@ -1092,7 +1092,12 @@ def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
                 prev2, tracked_objs, frame, not_oscillating, nosc_color)
 
         videoWriter.write(frame)
+
         ret, frame = video.read()
+        if count>=num_frames_in_history:
+            while count%skip!=0: #read more frames if necessary
+                ret, frame = video.read()
+                count+=1
 
     frame = writedistances(last_frame, tracked_objs)
     videoWriter.write(frame)
@@ -1138,4 +1143,4 @@ def track_video(fname, template_file, threshold,guiflag=True,label_all=False):
     if guiflag:
         cv2.destroyWindow(bar.winname)
     toc=time.time()
-    print("Time required for tracking= {:.2f}".format(toc-tic))
+    #print("Time required for tracking= {:.2f}".format(toc-tic))
