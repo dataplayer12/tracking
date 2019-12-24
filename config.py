@@ -2,7 +2,7 @@ FPS = 24
 F_0 = 0.5
 AUDIO_RATE = 44100
 FOURCC= [*'mp4v']
-FIND_OSCILLATING=False
+FIND_OSCILLATING=True
 
 with open('temp/template_path.txt','r') as f:
 	last_template=f.read()

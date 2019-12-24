@@ -139,7 +139,7 @@ class MovingObj:
 
         _iter = 20
         _threshold = 0.2
-        good_frac = 0.5
+        good_frac = 0.3
         x_osc = lfit_cython.linear_ransac1D(
             self.fft_frequencies, self.x_fft, _iter, _threshold, good_frac, f_0_index)
         y_osc = lfit_cython.linear_ransac1D(
