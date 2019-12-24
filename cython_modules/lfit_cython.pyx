@@ -65,6 +65,7 @@ def linear_ransac1D(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] y
         DTYPE_t _intercept
         DTYPE_t best_slope
         DTYPE_t best_intercept
+        DTYPE_t out
         float best_err = 1e4
         float this_err = 0.0
         float _pt_err = 0.0
@@ -116,7 +117,9 @@ def linear_ransac1D(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] y
                 best_err = this_err
         _iter += 1
 
-    return abs(best_slope*x[check_idx]+best_intercept-y[check_idx])>=0.75*threshold
+        out=abs(best_slope*x[check_idx]+best_intercept-y[check_idx])
+
+    return out,out>=threshold
 
 def computepairwise(np.ndarray[DTYPE_t, ndim=2] matrix1,np.ndarray[DTYPE_t, ndim=2] matrix2):
     #assert len(matrix1.shape)==2, 'First argument is not 2D'

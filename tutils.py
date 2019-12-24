@@ -9,6 +9,8 @@ from bokeh.layouts import gridplot
 from bokeh.io import export_png
 from scipy.io import wavfile
 from scipy.interpolate import interp1d
+from scipy.signal import medfilt
+from scipy.optimize import curve_fit
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -27,6 +29,7 @@ class MovingObj:
         self.is_being_tracked = False
         self.tracked_frame_indices = []
         self.is_oscillating = False
+        self.diff_at_f0=(0.0,0.0)
 
     def prepareKF(self):
         kalman = cv2.KalmanFilter(4, 2)
@@ -139,12 +142,13 @@ class MovingObj:
 
         _iter = 20
         _threshold = 0.2
-        good_frac = 0.3
-        x_osc = lfit_cython.linear_ransac1D(
+        good_frac = 0.5
+        x_res,x_osc = lfit_cython.linear_ransac1D(
             self.fft_frequencies, self.x_fft, _iter, _threshold, good_frac, f_0_index)
-        y_osc = lfit_cython.linear_ransac1D(
+        y_res,y_osc = lfit_cython.linear_ransac1D(
             self.fft_frequencies, self.y_fft, _iter, _threshold, good_frac, f_0_index)
         self.is_oscillating = x_osc or y_osc
+        self.diff_at_f0=(x_res,y_res)
 
     def show_fft(self, p, axis, color='red', display=False):
         if axis == 'x':
@@ -1015,7 +1019,80 @@ def analyze_sensing_area(files_to_analyze,bead_radius=3,total_frames=240,debug=F
             print("Reached maximum number of tries. Quitting")
             return
 
-def track_video(fname, template_file, threshold,guiflag=True,skip=1):
+def analyze_harmonic_motion(fname,tracked_objs,count):
+        rotatingbeads=[idx for (idx,b) in enumerate(tracked_objs) if b.is_oscillating and len(b.previous_centers)>0.5*count]
+        diffx=[tracked_objs[idx].diff_at_f0[0] for idx in rotatingbeads]
+        diffy=[tracked_objs[idx].diff_at_f0[1] for idx in rotatingbeads]
+        binsx,edgesx=np.histogram(diffx, density=True)
+        binsy,edgesy=np.histogram(diffy, density=True)
+        p=figure()
+        p.line(edgesx[:-1],binsx,color='red')
+        p.line(edgesy[:-1],binsy,color='blue')
+        p.xaxis.axis_label = 'Difference after ransac'
+        p.yaxis.axis_label = 'Probability'
+        export_png(p,filename=fname[:fname.rfind('/') + 1]+'diff_histogram.png')
+
+        rotatingbeads.sort(reverse=True,key=lambda x: tracked_objs[x].diff_at_f0[0]+tracked_objs[x].diff_at_f0[1])
+        rotatingbeads=rotatingbeads[:max(100,int(0.1*len(rotatingbeads)))]
+        folder = fname[:fname.rfind('/') + 1]+'graphs/'
+        if not os.path.isdir(folder):
+            os.mkdir(folder)
+
+        amplitudesx=[]
+        amplitudesy=[]
+
+        for idx in rotatingbeads:
+            xc,yc=zip(*tracked_objs[idx].previous_centers)
+            xc=np.array([x-xc[0] for x in xc])
+            yc=np.array([y-yc[0] for y in yc])
+            xc=medfilt(xc,kernel_size=5)
+            yc=medfilt(yc,kernel_size=5)
+
+            period=int(FPS/F_0)
+            xmav=np.array([np.mean(xc[idx2:idx2+period]) for idx2 in range(len(xc))], dtype=np.float32)
+            sx,ix=lfit_cython.fit_linear(np.arange(period//2,period//2+len(xmav), dtype=np.float32), xmav)
+            ymav=np.array([np.mean(yc[idx2:idx2+period]) for idx2 in range(len(yc))], dtype=np.float32)
+            sy,iy=lfit_cython.fit_linear(np.arange(period//2,period//2+len(ymav), dtype=np.float32), ymav)
+            interpx=sx*np.arange(len(xc))+ix
+            interpy=sy*np.arange(len(yc))+iy
+            detrendx=xc-interpx
+            detrendy=yc-interpy
+            
+            guess=np.array([5.0,np.pi/2])
+            sinfunc=lambda t,A,p: A*np.sin(2*np.pi*F_0*t+p)
+            tt=np.arange(len(xc))/float(FPS)
+            poptx, pcovx = curve_fit(sinfunc, tt, detrendx, p0=guess)
+            popty, pcovy = curve_fit(sinfunc, tt, detrendy, p0=guess)
+            fitfuncx=lambda t: poptx[0]*np.sin(2*np.pi*F_0*t+poptx[1])
+            fitfuncy=lambda t: popty[0]*np.sin(2*np.pi*F_0*t+popty[1])
+            amplitudesx.append(poptx[0])
+            amplitudesy.append(popty[0])
+            eqx='Ax={:.2f}, phix={:.2f}'.format(poptx[0],poptx[1])
+            eqy='Ay={:.2f}, phiy={:.2f}'.format(popty[0],popty[1])
+
+            p=figure()
+            #p.line(np.arange(period//2,period//2+len(xmav)),xmav,color='red')
+            p.line(np.arange(len(xc)),detrendx,color='red')
+            p.line(np.arange(len(xc)),fitfuncx(tt),color='red',legend=eqx)
+            #p.line(np.arange(period//2,period//2+len(ymav)),ymav,color='blue')
+            p.line(np.arange(len(yc)),detrendy,color='blue')
+            p.line(np.arange(len(yc)),fitfuncy(tt),color='blue',legend=eqy)
+            p.xaxis.axis_label = 'Frame #'
+            p.yaxis.axis_label = 'Position (pixels)'
+            export_png(p, filename=folder+"bead{}.png".format(idx))
+
+        binsx,edgesx=np.histogram(amplitudesx,bins=int(max(amplitudesx)-min(amplitudesx)), density=True)
+        binsy,edgesy=np.histogram(amplitudesy,bins=int(max(amplitudesy)-min(amplitudesy)), density=True)
+
+        p=figure()
+        p.line(edgesx[:-1],binsx,color='red')
+        p.line(edgesy[:-1],binsy,color='blue')
+        p.xaxis.axis_label = 'Amplitude (pixels)'
+        p.yaxis.axis_label = 'Probability'
+        export_png(p,filename=fname[:fname.rfind('/') + 1]+'amp_histogram.png')
+
+
+def track_video(fname, template_file, threshold,guiflag=True,skip=1,hm=False):
     tic=time.time()
     video = cv2.VideoCapture(fname)
     txtfile = fname[:fname.rfind('.')] + '_data.txt'
@@ -1140,6 +1217,10 @@ def track_video(fname, template_file, threshold,guiflag=True,skip=1):
     with open(fname[:fname.rfind('/') + 1] + 'num_tracked.txt', 'w') as f:
         f.write('Number of beads tracked={}\n Number of beads stopped= {}\n Percentage of beads stopped= {:.2f}'
                 .format(len(tracked_objs), num_stopped, num_stopped * 100.0 / float(len(tracked_objs))))
+
+    if hm:
+        analyze_harmonic_motion(fname,tracked_objs,count)
+
     if guiflag:
         cv2.destroyWindow(bar.winname)
     toc=time.time()

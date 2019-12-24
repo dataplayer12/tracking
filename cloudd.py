@@ -94,7 +94,7 @@ class ServiceMonitor(object):
             for pidx in range(min(max_procs,total_n_videos-run*max_procs)):
                 vid=trimmed_videos[max_procs*run+pidx]
                 processes.append(Process(target=tutils.track_video,\
-                    args=(vid,temp,th,cfg.gui_flag)))
+                    args=(vid,temp,th,cfg.gui_flag,1,True)))
                 processes[-1].start()
 
             while sum([p.is_alive() for p in processes]):
