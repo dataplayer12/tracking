@@ -1072,21 +1072,24 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
 
             p=figure()
             #p.line(np.arange(period//2,period//2+len(xmav)),xmav,color='red')
-            p.line(np.arange(len(xc)),detrendx,color='red')
-            p.line(np.arange(len(xc)),fitfuncx(tt),color='red',legend=eqx)
+            p.line(tt,detrendx,color='red')
+            p.line(tt,fitfuncx(tt),color='red',legend=eqx)
             #p.line(np.arange(period//2,period//2+len(ymav)),ymav,color='blue')
-            p.line(np.arange(len(yc)),detrendy,color='blue')
-            p.line(np.arange(len(yc)),fitfuncy(tt),color='blue',legend=eqy)
-            p.xaxis.axis_label = 'Frame #'
+            p.line(tt,detrendy,color='blue')
+            p.line(tt,fitfuncy(tt),color='blue',legend=eqy)
+            p.xaxis.axis_label = 'Time (seconds)'
             p.yaxis.axis_label = 'Position (pixels)'
             export_png(p, filename=folder+"bead{}.png".format(idx))
+
+        amplitudesx=[abs(x) for x in amplitudesx]
+        amplitudesy=[abs(y) for y in amplitudesy]
 
         binsx,edgesx=np.histogram(amplitudesx,bins=int(max(amplitudesx)-min(amplitudesx)), density=True)
         binsy,edgesy=np.histogram(amplitudesy,bins=int(max(amplitudesy)-min(amplitudesy)), density=True)
 
         p=figure()
-        p.line(edgesx[:-1],binsx,color='red')
-        p.line(edgesy[:-1],binsy,color='blue')
+        p.line(edgesx[:-1],binsx,color='red',legend='x')
+        p.line(edgesy[:-1],binsy,color='blue',legend='y')
         p.xaxis.axis_label = 'Amplitude (pixels)'
         p.yaxis.axis_label = 'Probability'
         export_png(p,filename=fname[:fname.rfind('/') + 1]+'amp_histogram.png')
