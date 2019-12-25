@@ -10,7 +10,7 @@ def app():
     window = tk.Tk()
 
     window.title("Tracking Software")
-    window.geometry("750x750")
+    window.geometry("750x800")
     window.resizable(width="true", height="true")
 
     # three frames on top of each other
