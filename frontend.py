@@ -263,7 +263,7 @@ def app():
 
             if isyes('crop'):
                 prev_points = []
-                for f in trimmed_videos:
+                for idx,f in enumerate(trimmed_videos):
                     cropped, prev_points = tutils.crop_and_trim(f, prev_points)
                     variables['affa'].append(cropped)
                     variables['status'].set(
