@@ -1102,8 +1102,8 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
 
         amplitudesx=[amplitudesx[idx] for idx in low_noise]
         amplitudesy=[amplitudesy[idx] for idx in low_noise]
-        phasex=[phasex[idx]/np.pi for idx in low_noise]
-        phasey=[phasey[idx]/np.pi for idx in low_noise]
+        phasex=[((phasex[idx]/np.pi-min(phasex)/np.pi)%(2*np.pi)) for idx in low_noise]
+        phasey=[((phasey[idx]/np.pi-min(phasey)/np.pi)%(2*np.pi)) for idx in low_noise]
 
         amplitudesx=[abs(x) for x in amplitudesx]
         amplitudesy=[abs(y) for y in amplitudesy]
