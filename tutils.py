@@ -1078,10 +1078,10 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
 
             p=figure()
             #p.line(np.arange(period//2,period//2+len(xmav)),xmav,color='red')
-            p.line(tt,detrendx,color='red')
+            p.line(tt,detrendx,color='red',line_dash='dashed')
             p.line(tt,tx,color='red',legend=eqx)
             #p.line(np.arange(period//2,period//2+len(ymav)),ymav,color='blue')
-            p.line(tt,detrendy,color='blue')
+            p.line(tt,detrendy,color='blue',line_dash='dashed')
             p.line(tt,ty,color='blue',legend=eqy)
             p.xaxis.axis_label = 'Time (seconds)'
             p.yaxis.axis_label = 'Position (pixels)'
