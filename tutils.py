@@ -1039,6 +1039,7 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
             os.mkdir(folder)
 
         amplitudesx,amplitudesy=[],[]
+        phasex,phasey=[],[]
         errorsx,errorsy=[],[]
 
         for idx in rotatingbeads:
@@ -1067,6 +1068,8 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
             fitfuncy=lambda t: popty[0]*np.sin(2*np.pi*F_0*t+popty[1])
             amplitudesx.append(poptx[0])
             amplitudesy.append(popty[0])
+            phasex.append(poptx[1])
+            phasey.append(popty[1])
             eqx='Ax={:.2f}, phix={:.2f}'.format(poptx[0],poptx[1])
             eqy='Ay={:.2f}, phiy={:.2f}'.format(popty[0],popty[1])
             tx=fitfuncx(tt)
@@ -1099,6 +1102,8 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
 
         amplitudesx=[amplitudesx[idx] for idx in low_noise]
         amplitudesy=[amplitudesy[idx] for idx in low_noise]
+        phasex=[phasex[idx]/np.pi for idx in low_noise]
+        phasey=[phasey[idx]/np.pi for idx in low_noise]
 
         amplitudesx=[abs(x) for x in amplitudesx]
         amplitudesy=[abs(y) for y in amplitudesy]
@@ -1106,18 +1111,31 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
         binsx,edgesx=np.histogram(amplitudesx,bins=int(max(amplitudesx)-min(amplitudesx)), density=True)
         binsy,edgesy=np.histogram(amplitudesy,bins=int(max(amplitudesy)-min(amplitudesy)), density=True)
 
-        p=figure()
-        p.line(edgesx[:-1],binsx,color='red',legend='x')
-        p.line(edgesy[:-1],binsy,color='blue',legend='y')
-        p.xaxis.axis_label = 'Amplitude (pixels)'
-        p.yaxis.axis_label = 'Probability'
-        export_png(p,filename=fname[:fname.rfind('/') + 1]+'amp_histogram.png')
+        pbinsx,pedgesx=np.histogram(phasex,bins=20, density=True)
+        pbinsy,pedgesy=np.histogram(phasey,bins=20, density=True)
+
+        p1=figure()
+        p1.line(edgesx[:-1],binsx,color='red',legend='x')
+        p1.line(edgesy[:-1],binsy,color='blue',legend='y')
+        p1.xaxis.axis_label = 'Amplitude (pixels)'
+        p1.yaxis.axis_label = 'Probability'
+        export_png(p1,filename=fname[:fname.rfind('/') + 1]+'amp_histogram.png')
+
+        p2=figure()
+        p2.line(pedgesx[:-1],pbinsx,color='red',legend='x')
+        p2.line(pedgesy[:-1],pbinsy,color='blue',legend='y')
+        p2.xaxis.axis_label = 'Phase (pi)'
+        p2.yaxis.axis_label = 'Probability'
+        export_png(p2,filename=fname[:fname.rfind('/') + 1]+'phase_histogram.png')
 
         histdata=str([list(edgesx[:-1]),list(binsx),list(edgesy[:-1]),list(binsy)])
-
+        phistdata=str([list(pedgesx[:-1]),list(pbinsx),list(pedgesy[:-1]),list(pbinsy)])
+        
         with open(fname[:fname.rfind('/') + 1]+'amp_histogram_data.txt','w') as f:
             f.write(histdata)
 
+        with open(fname[:fname.rfind('/') + 1]+'phase_histogram_data.txt','w') as f:
+            f.write(phistdata)
 
 def track_video(fname, template_file, threshold,guiflag=True,skip=1,hm=False):
     tic=time.time()
