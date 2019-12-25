@@ -1033,13 +1033,13 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
         export_png(p,filename=fname[:fname.rfind('/') + 1]+'diff_histogram.png')
 
         rotatingbeads.sort(reverse=True,key=lambda x: tracked_objs[x].diff_at_f0[0]+tracked_objs[x].diff_at_f0[1])
-        rotatingbeads=rotatingbeads[:max(100,int(0.1*len(rotatingbeads)))]
+        #rotatingbeads=rotatingbeads[:max(100,int(0.1*len(rotatingbeads)))]
         folder = fname[:fname.rfind('/') + 1]+'graphs/'
         if not os.path.isdir(folder):
             os.mkdir(folder)
 
-        amplitudesx=[]
-        amplitudesy=[]
+        amplitudesx,amplitudesy=[],[]
+        errorsx,errorsy=[],[]
 
         for idx in rotatingbeads:
             xc,yc=zip(*tracked_objs[idx].previous_centers)
@@ -1069,17 +1069,36 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
             amplitudesy.append(popty[0])
             eqx='Ax={:.2f}, phix={:.2f}'.format(poptx[0],poptx[1])
             eqy='Ay={:.2f}, phiy={:.2f}'.format(popty[0],popty[1])
+            tx=fitfuncx(tt)
+            ty=fitfuncy(tt)
+            errx=np.mean((xc-tx)**2)
+            erry=np.mean((yc-ty)**2)
+            errorsx.append(errx)
+            errorsy.append(erry)
 
             p=figure()
             #p.line(np.arange(period//2,period//2+len(xmav)),xmav,color='red')
             p.line(tt,detrendx,color='red')
-            p.line(tt,fitfuncx(tt),color='red',legend=eqx)
+            p.line(tt,tx,color='red',legend=eqx)
             #p.line(np.arange(period//2,period//2+len(ymav)),ymav,color='blue')
             p.line(tt,detrendy,color='blue')
-            p.line(tt,fitfuncy(tt),color='blue',legend=eqy)
+            p.line(tt,ty,color='blue',legend=eqy)
             p.xaxis.axis_label = 'Time (seconds)'
             p.yaxis.axis_label = 'Position (pixels)'
             export_png(p, filename=folder+"bead{}.png".format(idx))
+
+        
+        avgex,stdex=np.mean(errorsx),np.std(errorsx)
+        avgey,stdey=np.mean(errorsy),np.std(errorsy)
+
+        isln=lambda idx2: abs(errorsx[idx2]-avgex)<stdex and abs(errorsy[idx2]-avgey)<stdey
+        low_noise=[idx2 for idx2,_ in enumerate(rotatingbeads) if isln(idx2)]
+
+        with open(fname[:fname.rfind('/') + 1]+'low_noise.txt','w') as f:
+            f.write(str([rotatingbeads[ix] for ix in low_noise]))
+
+        amplitudesx=[amplitudesx[idx] for idx in low_noise]
+        amplitudesy=[amplitudesy[idx] for idx in low_noise]
 
         amplitudesx=[abs(x) for x in amplitudesx]
         amplitudesy=[abs(y) for y in amplitudesy]
