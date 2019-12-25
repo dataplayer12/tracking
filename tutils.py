@@ -1113,6 +1113,11 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
         p.yaxis.axis_label = 'Probability'
         export_png(p,filename=fname[:fname.rfind('/') + 1]+'amp_histogram.png')
 
+        histdata=str([list(edgesx[:-1]),list(binsx),list(edgesy[:-1]),list(binsy)])
+
+        with open(fname[:fname.rfind('/') + 1]+'amp_histogram_data.txt','w') as f:
+            f.write(histdata)
+
 
 def track_video(fname, template_file, threshold,guiflag=True,skip=1,hm=False):
     tic=time.time()
