@@ -48,6 +48,7 @@ def app():
     footer.grid(row=2, column=0)
 
     def get_folder(*args):
+        refresh_app()
         filename = filed.askopenfilename(
             initialdir=cfg.BASEDIR, title='Please select the video')
         variables['folder'].set(filename)
@@ -189,7 +190,7 @@ def app():
             variables['hm'].set('No')
             variables['sb'].set('No')
             variables['threshold'].set(0.6)
-            variables['parallel'].set('No')
+            variables['parallel'].set('Yes')
             variables['gpu'].set('No')
             variables['skip'].set(1.0)
             

@@ -1023,15 +1023,18 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
         rotatingbeads=[idx for (idx,b) in enumerate(tracked_objs) if b.is_oscillating and len(b.previous_centers)>0.5*count]
         diffx=[tracked_objs[idx].diff_at_f0[0] for idx in rotatingbeads]
         diffy=[tracked_objs[idx].diff_at_f0[1] for idx in rotatingbeads]
-        binsx,edgesx=np.histogram(diffx, density=True)
-        binsy,edgesy=np.histogram(diffy, density=True)
-        p=figure()
-        p.line(edgesx[:-1],binsx,color='red')
-        p.line(edgesy[:-1],binsy,color='blue')
-        p.xaxis.axis_label = 'Difference after ransac'
-        p.yaxis.axis_label = 'Probability'
-        export_png(p,filename=fname[:fname.rfind('/') + 1]+'diff_histogram.png')
-
+        try:
+            binsx,edgesx=np.histogram(diffx, density=True)
+            binsy,edgesy=np.histogram(diffy, density=True)
+            p=figure()
+            p.line(edgesx[:-1],binsx,color='red')
+            p.line(edgesy[:-1],binsy,color='blue')
+            p.xaxis.axis_label = 'Difference after ransac'
+            p.yaxis.axis_label = 'Probability'
+            export_png(p,filename=fname[:fname.rfind('/') + 1]+'diff_histogram.png')
+        except:
+            print("Could not create histogram for fft curve")
+            
         rotatingbeads.sort(reverse=True,key=lambda x: tracked_objs[x].diff_at_f0[0]+tracked_objs[x].diff_at_f0[1])
         #rotatingbeads=rotatingbeads[:max(100,int(0.1*len(rotatingbeads)))]
         folder = fname[:fname.rfind('/') + 1]+'graphs/'
@@ -1108,8 +1111,8 @@ def analyze_harmonic_motion(fname,tracked_objs,count):
         amplitudesx=[abs(x) for x in amplitudesx]
         amplitudesy=[abs(y) for y in amplitudesy]
 
-        binsx,edgesx=np.histogram(amplitudesx,bins=int(max(amplitudesx)-min(amplitudesx)), density=True)
-        binsy,edgesy=np.histogram(amplitudesy,bins=int(max(amplitudesy)-min(amplitudesy)), density=True)
+        binsx,edgesx=np.histogram(amplitudesx,bins=max(1,int(max(amplitudesx)-min(amplitudesx))), density=True)
+        binsy,edgesy=np.histogram(amplitudesy,bins=max(1,int(max(amplitudesy)-min(amplitudesy))), density=True)
 
         pbinsx,pedgesx=np.histogram(phasex,bins=20, density=True)
         pbinsy,pedgesy=np.histogram(phasey,bins=20, density=True)
