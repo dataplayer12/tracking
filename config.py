@@ -7,7 +7,7 @@ FIND_OSCILLATING=True
 with open('temp/template_path.txt','r') as f:
 	last_template=f.read()
 
-BASEDIR='/home/sandhulab/Documents/' #a new folder should be created here for analysis
+BASEDIR='/home/sandhulab/Dropbox/BioCloud' #a new folder should be created here for analysis
 
 biosensing_flag='ok' #after uploading videos to a folder, 
 					#create a folder named 'ok' (case insensitive) to begin analysis
