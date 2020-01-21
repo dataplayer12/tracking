@@ -395,7 +395,7 @@ def settings_app():
         'tmo': tk.Label(frames['f9'], text='Maximum time spent waiting for flag (min.)? '),
         'nfih': tk.Label(frames['f10'], text='Number of frames in history: '),
         'mklt': tk.Label(frames['f11'], text='Maximum learning steps for Kalman filter: '),
-        'cww': tk.Label(frames['f12'], text='Cropping window: Width= '),
+        'cww': tk.Label(frames['f12'], text='Cropping window: Width,'),
         'cwh': tk.Label(frames['f12'], text='Height= '),
         'delay': tk.Label(frames['f13'], text='Time interval at which basedir is checked (s): '),
     }
@@ -428,6 +428,26 @@ def settings_app():
         'gui':'Yes', 'tmo':15, 'nfih':2, 'mklt':30, 'cww':1920,
         'cwh':1080, 'delay':5 }
 
+    def show_explanation(v):
+        def windowfn(*args):
+            expw=tk.Tk()
+            expw.title('Explanation')
+            win_w=str(max(100,7*len(explanations[v])))
+            expw.geometry('{}x150'.format(win_w))
+            cf = tk.Frame(expw, borderwidth=2, pady=5)
+            botf = tk.Frame(expw, borderwidth=2, pady=5)
+            cf.grid(row=1, column=0)
+            l=tk.Label(cf, text=explanations[v]+'\n')
+            l.pack(side='left', padx=1)
+
+            b_close = tk.Button(botf, text="Close", command=expw.destroy,
+                             bg='dark red', fg='black', relief='raised', width=10, height=2, font=('Helvetica 12'))
+            b_close.grid(column=0, row=0, sticky='e', padx=50, pady=2)
+            cf.pack(fill='x', pady=2)
+            botf.pack(fill='x', pady=2)
+            expw.mainloop()
+        return windowfn
+
     entries = {
         'fps': tk.Entry(frames['f1'], textvariable=setting_vars['fps'], width=8),
         'f_0': tk.Entry(frames['f2'], textvariable=setting_vars['f_0'], width=8),
@@ -444,21 +464,70 @@ def settings_app():
         'cww': tk.Entry(frames['f12'], textvariable=setting_vars['cww'], width=4),
         'cwh': tk.Entry(frames['f12'], textvariable=setting_vars['cwh'], width=4),
         'delay': tk.Entry(frames['f13'], textvariable=setting_vars['delay'], width=4),
+
+        'fpsi': tk.Button(frames['f1'], text='Info', command=show_explanation('fps'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'f_0i': tk.Button(frames['f2'], text='Info', command=show_explanation('f_0'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'ari': tk.Button(frames['f3'], text='Info', command=show_explanation('ar'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'fourcci': tk.Button(frames['f4'], text='Info', command=show_explanation('fourcc'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'foi': tk.Button(frames['f5'], text='Info', command=show_explanation('fo'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'basediri': tk.Button(frames['f6'], text='Info', command=show_explanation('basedir'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'bfi': tk.Button(frames['f7'], text='Info', command=show_explanation('bf'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'guii': tk.Button(frames['f8'], text='Info', command=show_explanation('gui'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'tmoi': tk.Button(frames['f9'], text='Info', command=show_explanation('tmo'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'nfihi': tk.Button(frames['f10'], text='Info', command=show_explanation('nfih'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'mklti': tk.Button(frames['f11'], text='Info', command=show_explanation('mklt'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'cwwi': tk.Button(frames['f12'], text='Info', command=show_explanation('cww'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold')),
+        'cwhi': tk.Button(frames['f12'], text='', command=show_explanation('cwh'), bg='white',
+                            fg='black', relief='raised', width=0, height=2, font=('Helvetica 9 bold')),
+        'delayi': tk.Button(frames['f13'], text='Info', command=show_explanation('delay'), bg='white',
+                            fg='black', relief='raised', width=10, height=2, font=('Helvetica 9 bold'))
+    }
+
+    explanations = {
+        'fps': 'FPS: Number of frames in one second of video',
+        'f_0': 'F_0: Frequency of harmonic oscillation of particles',
+        'ar': 'Audio rate',
+        'fourcc': 'fourcc: Fourcc for writing videos, such as mp4v, mjpg and avc1',
+        'fo': 'Whether or not to identify oscillating particles',
+        'basedir': 'directory which is monitored by cloud program',
+        'bf': 'after uploading videos to a folder,create a folder named: ok (case insensitive) to begin analysis',
+        'gui': 'Should the cloud program display its logo and progress bar? Set to False if your computer does not have a monitor connected to it',
+        'tmo': 'Timeout in minutes which biosensing flag is waited for',
+        'nfih': 'number of frames in history: first x frames are used to initialize the objects being tracked',
+        'mklt': 'maximum kalman learning time: how many steps to allow kalman filter to learn motion model',
+        'cww': 'Cropping window width',
+        'cwh': 'Cropping window height',
+        'delay': 'delay in seconds at which basedir is checked for new folders'
     }
 
     def restore_defaults(*args):
+        settings.update_idletasks()
         for v in setting_vars.keys():
             setting_vars[v].set(default_vars[v])
-            entries[v]['text']=default_vars[v]
+            #entries[v]['text']=default_vars[v]
             print('{}: {}'.format(v,default_vars[v]))
 
     def save_settings(*args):
+        settings.update_idletasks()
         for v in setting_vars.keys():
             print('{}: {}'.format(v,setting_vars[v].get()))
 
     for k in labels.keys():
         labels[k].pack(side='left', padx=1)
-        entries[k].pack(side='left', padx=1)
+        entries[k+'i'].pack(side='right', padx=1)
+        entries[k].pack(side='right', padx=1)
 
     for f in frames.values():
         f.pack(fill='x', pady=2)
@@ -470,9 +539,11 @@ def settings_app():
     save_button = tk.Button(bottom_frame, text="Save Settings", command=save_settings,
                                bg='dark green', fg='black', relief='raised', width=20, height=2, font=('Helvetica 12'))
     save_button.grid(column=1, row=0, sticky='e', padx=100, pady=2)
+    settings.update_idletasks()
 
     settings.mainloop()
 
 if __name__ == '__main__':
     set_start_method('spawn')
     app()
+    #settings_app()
