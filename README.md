@@ -8,7 +8,7 @@ A cross-platform particle tracking software.
 - [Setup instructions](https://github.com/dataplayer12/tracking/blob/master/README.md#setup)
 - [Usage instructions](https://github.com/dataplayer12/tracking/blob/master/README.md#usage)
 - [Differences between different releases](https://github.com/dataplayer12/tracking/blob/master/README.md#releases)
-- [Naming]()
+- [Naming](https://github.com/dataplayer12/tracking/blob/master/README.md#naming)
 
 # Supported platforms
 - Ubuntu
@@ -69,3 +69,6 @@ Version 0.2 of TM6000 introduces modes for easier setting of two kinds of experi
 
 ## Release 0.1
 Version 0.1 of TM6000 is the first stable release of this software, introducing a GUI for particle tracking. Only one video can be tracked at a time.
+
+# Naming
+This software is named `Track Master 6000`(TM6k). The name comes from [Dilbert](https://en.wikipedia.org/wiki/Dilbert), a comic series created by Scott Adams, one of my favorites. In the very first episode of the first season (of the animated television series based on the comic), Dilbert's boss decides to name a new product which has not been developed yet and for which no specifications have been decided. Dilbert's mom (Dilmom) suggests the name `GruntMaster 6000`, a name which gives the feeling that the product is less advanced than `GruntMaster 9000` (which also does not exist), but just as fun. This software was written in conjunction with experiments being done in our lab and its functionality was expanded and improved until we realized that it would be useful for other researchers working in particle tracking and biosensing. However, contrary to Dilbert, we had a product but no name. So, it felt fitting to name it `Track Master 6000`, after Dilmom's sage advice. TM6k is less advanced than a hypothetical TM9k, but just as useful. I hope you will find it useful in your research. Give it a try.
