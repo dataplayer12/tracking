@@ -4,6 +4,12 @@ A cross-platform particle tracking software.
 
 <img src="https://github.com/dataplayer12/tracking/blob/master/images/tracklogo.png" width="64" height="128" />
 
+# Contents
+- [Setup instructions]()
+- [Usage instructions]
+- [Differences between different releases]
+- [Naming]
+
 # Supported platforms
 - Ubuntu
 - macOS
