@@ -3,7 +3,7 @@ Cython==0.29.13
 easygui==0.98.1
 grpcio==1.21.1
 mkl-random==1.0.2
-numpy==1.15.4
+numpy==1.22.0
 proglog==0.1.9
 ptyprocess==0.6.0
 scikit-image==0.15.0
