@@ -1,7 +1,7 @@
 bokeh==1.0.4
 Cython==0.29.13
 easygui==0.98.1
-grpcio==1.21.1
+grpcio==1.53.0
 mkl-random==1.0.2
 numpy==1.15.4
 proglog==0.1.9
